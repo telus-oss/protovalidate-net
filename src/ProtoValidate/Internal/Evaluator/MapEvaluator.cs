@@ -1,0 +1,122 @@
+﻿using Buf.Validate;
+using Google.Protobuf.Reflection;
+
+namespace ProtoValidate.Internal.Evaluator;
+
+public class MapEvaluator : IEvaluator
+{
+    public ValueEvaluator? KeyEvaluator { get; }
+    public ValueEvaluator? ValueEvaluator { get; }
+
+    public MapEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
+    {
+        if (fieldConstraints == null)
+        {
+            throw new ArgumentNullException(nameof(fieldConstraints));
+        }
+
+        if (fieldDescriptor == null)
+        {
+            throw new ArgumentNullException(nameof(fieldDescriptor));
+        }
+
+        var mapRules = fieldConstraints.Map;
+        var keyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
+        var valueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
+
+        if (mapRules.Keys != null)
+        {
+            KeyEvaluator = new ValueEvaluator(mapRules.Keys, keyDescriptor);
+        }
+
+        if (mapRules.Values != null)
+        {
+            ValueEvaluator = new ValueEvaluator(mapRules.Values, valueDescriptor);
+        }
+    }
+
+    public bool Tautology => (KeyEvaluator != null && KeyEvaluator.Tautology) || (ValueEvaluator != null && ValueEvaluator.Tautology);
+
+    public ValidationResult Evaluate(IValue? value, bool failFast)
+    {
+        if (value == null)
+        {
+            return ValidationResult.Empty;
+        }
+
+        var violations = new List<Violation>();
+        var mapValue = value.MapValue();
+
+        foreach (var entry in mapValue)
+        {
+            violations.AddRange(EvalPairs(entry.Key, entry.Value, failFast));
+            if (failFast && violations.Count > 0)
+            {
+                return new ValidationResult(violations);
+            }
+        }
+
+        if (violations.Count == 0)
+        {
+            return ValidationResult.Empty;
+        }
+
+        return new ValidationResult(violations);
+    }
+
+    private List<Violation> EvalPairs(IValue key, IValue value, bool failFast)
+    {
+        List<Violation> keyViolations;
+        if (KeyEvaluator != null)
+        {
+            keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
+        }
+        else
+        {
+            keyViolations = new List<Violation>();
+        }
+
+        List<Violation> valueViolations;
+        if (failFast && keyViolations.Count > 0)
+        {
+            // Don't evaluate value constraints if failFast is enabled and keys failed validation.
+            // We still need to continue execution to the end to properly prefix violation field paths.
+            valueViolations = new List<Violation>();
+        }
+        else if (ValueEvaluator == null)
+        {
+            valueViolations = new List<Violation>();
+        }
+        else
+        {
+            valueViolations = ValueEvaluator.Evaluate(value, failFast).Violations;
+        }
+
+        if (keyViolations.Count == 0 && valueViolations.Count == 0)
+        {
+            return new List<Violation>();
+        }
+
+        var violations = new List<Violation>(keyViolations.Count + valueViolations.Count);
+        violations.AddRange(keyViolations);
+        violations.AddRange(valueViolations);
+
+        var keyName = key.Value<object?>();
+        if (keyName == null)
+        {
+            return new List<Violation>();
+        }
+
+        List<Violation> prefixedViolations;
+        if (keyName.IsNumber())
+        {
+            prefixedViolations = violations.PrefixErrorPaths("[{0}]", keyName);
+        }
+        else
+        {
+            prefixedViolations = violations.PrefixErrorPaths("[\"{0}\"]", keyName);
+        }
+
+        return prefixedViolations;
+    }
+}

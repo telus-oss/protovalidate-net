@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ProtoValidate.Conformance": {
+      "commandName": "Project",
+      "workingDirectory": "D:\\OpenSourceLibraries\\protovalidate-net\\.tmp\\bin"
+    }
+  }
+}

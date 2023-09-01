@@ -1,0 +1,70 @@
+﻿using Buf.Validate;
+using Google.Protobuf.Reflection;
+
+namespace ProtoValidate.Internal.Evaluator;
+
+public class AnyEvaluator : IEvaluator
+{
+    private FieldDescriptor TypeUrlDescriptor { get; }
+    private Dictionary<string, object?>? InLookup { get; }
+    private Dictionary<string, object?>? NotInLookup { get; }
+
+    public AnyEvaluator(FieldDescriptor typeUrlDescriptor, IList<string>? inList, IList<string>? notInList)
+    {
+      TypeUrlDescriptor = typeUrlDescriptor ?? throw new ArgumentNullException(nameof(typeUrlDescriptor));
+
+        //convert to a dictionary for faster performance than O(n)
+        if (inList != null)
+        {
+            InLookup = inList.ToDictionary(c => c, c => (object?)null);
+        }
+
+        if (notInList != null)
+        {
+            NotInLookup = notInList.ToDictionary(c => c, c => (object?)null);
+        }
+    }
+
+    public bool Tautology => (InLookup != null && InLookup.Count == 0) && (NotInLookup != null && NotInLookup.Count == 0);
+
+    public ValidationResult Evaluate(IValue? value, bool failFast)
+    {
+        var anyValue = value?.MessageValue;
+        if (anyValue == null)
+        {
+            return ValidationResult.Empty;
+        }
+
+        var violationList = new List<Violation>();
+
+        var typeUrl = (string)TypeUrlDescriptor.Accessor.GetValue(anyValue);
+
+        if (InLookup != null && InLookup.Count > 0 && !InLookup.ContainsKey(typeUrl))
+        {
+            var violation = new Violation
+            {
+                ConstraintId = "any.in",
+                Message = "Type url must be in the allow list."
+            };
+
+            violationList.Add(violation);
+            if (failFast)
+            {
+                return new ValidationResult(violationList);
+            }
+        }
+
+        if (NotInLookup != null && NotInLookup.Count > 0 && NotInLookup.ContainsKey(typeUrl))
+        {
+            var violation = new Violation
+            {
+                ConstraintId = "any.not_in",
+                Message = "Type url must not be in the block list."
+            };
+
+            violationList.Add(violation);
+        }
+
+        return new ValidationResult(violationList);
+    }
+}
