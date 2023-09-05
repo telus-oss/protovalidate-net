@@ -32,6 +32,8 @@ public class ConformanceUnitTestParser
                     var suiteName = !string.IsNullOrWhiteSpace(suite.Name) ? suite.Name : "Suite " + (i + 1);
                     var testName = !string.IsNullOrWhiteSpace(test.Name) ? test.Name : "Test " + (j + 1);
 
+
+
                     var testCase = new ConformanceUnitTestCase(suiteName, testName, test.Wanted, test.Input);
                     
                     testCases.Add(testCase);

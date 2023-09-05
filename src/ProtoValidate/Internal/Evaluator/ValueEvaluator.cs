@@ -5,9 +5,9 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class ValueEvaluator : IEvaluator
 {
-    private FieldConstraints FieldConstraints { get; }
-    private FieldDescriptor FieldDescriptor { get; }
-
+    public FieldConstraints FieldConstraints { get; }
+    public FieldDescriptor FieldDescriptor { get; }
+    public List<IEvaluator> Evaluators { get; } = new();
     public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
         FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
@@ -21,6 +21,11 @@ public class ValueEvaluator : IEvaluator
     /// </summary>
     public bool IgnoreEmpty => FieldConstraints.IgnoreEmpty;
 
+    public override string ToString()
+    {
+        return $"Value Evaluator: {FieldDescriptor.FullName}";
+    }
+
     public void AddEvaluator(IEvaluator evaluator)
     {
         if (evaluator == null)
@@ -31,7 +36,7 @@ public class ValueEvaluator : IEvaluator
         Evaluators.Add(evaluator);
     }
 
-    private List<IEvaluator> Evaluators { get; } = new();
+
     public bool Tautology => Evaluators.Count > 0;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)

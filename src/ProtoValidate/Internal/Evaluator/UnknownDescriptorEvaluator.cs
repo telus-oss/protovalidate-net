@@ -17,6 +17,11 @@ public class UnknownDescriptorEvaluator : IEvaluator
         Descriptor = descriptor;
     }
 
+    public override string ToString()
+    {
+        return $"UnknownDescriptorEvaluator Evaluator: {Descriptor.FullName}";
+    }
+
     public bool Tautology => false;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)

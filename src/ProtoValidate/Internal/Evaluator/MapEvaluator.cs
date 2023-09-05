@@ -1,5 +1,6 @@
 ﻿using Buf.Validate;
 using Google.Protobuf.Reflection;
+using System.Security.Permissions;
 
 namespace ProtoValidate.Internal.Evaluator;
 
@@ -7,6 +8,8 @@ public class MapEvaluator : IEvaluator
 {
     public ValueEvaluator KeyEvaluator { get; }
     public ValueEvaluator ValueEvaluator { get; }
+    public FieldDescriptor FieldDescriptor { get; }
+    public FieldConstraints FieldConstraints { get; }
 
     public MapEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
@@ -20,6 +23,9 @@ public class MapEvaluator : IEvaluator
             throw new ArgumentNullException(nameof(fieldDescriptor));
         }
 
+        FieldConstraints = fieldConstraints;
+        FieldDescriptor = fieldDescriptor;
+
         var mapRules = fieldConstraints.Map;
         var keyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
         var valueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
@@ -29,6 +35,10 @@ public class MapEvaluator : IEvaluator
 
         KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldConstraints, keyDescriptor);
         ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor);
+    }
+    public override string ToString()
+    {
+        return $"Map Evaluator {FieldDescriptor.FullName}";
     }
 
     public bool Tautology => KeyEvaluator.Tautology && ValueEvaluator.Tautology;

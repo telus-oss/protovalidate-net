@@ -6,6 +6,9 @@ namespace ProtoValidate.Internal.Evaluator;
 public class ListEvaluator : IEvaluator
 {
     public ValueEvaluator ItemConstraints { get; }
+    public FieldDescriptor FieldDescriptor { get; }
+    public FieldConstraints FieldConstraints { get; }
+
 
     public ListEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
@@ -19,9 +22,16 @@ public class ListEvaluator : IEvaluator
             throw new ArgumentNullException(nameof(fieldDescriptor));
         }
 
+        FieldConstraints = fieldConstraints;
+        FieldDescriptor = fieldDescriptor;
+
+
         ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor);
     }
-
+    public override string ToString()
+    {
+        return $"List Evaluator: {FieldDescriptor.FullName}";
+    }
 
     public bool Tautology => ItemConstraints.Tautology;
 

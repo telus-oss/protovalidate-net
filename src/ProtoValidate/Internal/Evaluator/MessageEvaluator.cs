@@ -1,10 +1,17 @@
 ﻿using Buf.Validate;
+using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
 public class MessageEvaluator : IEvaluator
 {
-    private List<IEvaluator> Evaluators { get; } = new();
+    public List<IEvaluator> Evaluators { get; } = new();
+    public MessageDescriptor Descriptor { get; }
+
+    public MessageEvaluator(MessageDescriptor descriptor)
+    {
+        Descriptor = descriptor;
+    }
 
     public void AddEvaluator(IEvaluator evaluator)
     {
@@ -15,7 +22,10 @@ public class MessageEvaluator : IEvaluator
 
         Evaluators.Add(evaluator);
     }
-
+    public override string ToString()
+    { 
+        return $"Message Evaluator: {Descriptor.FullName}";
+    }
     public bool Tautology
     {
         get

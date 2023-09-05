@@ -12,10 +12,22 @@ namespace ProtoValidate.Internal.Constraints;
 
 public class ConstraintCache
 {
+    private class CompiledExpression
+    {
+        public CompiledExpression(Expression source, CelProgramDelegate celProgramDelegate)
+        {
+            Source = source;
+            CelProgramDelegate = celProgramDelegate;
+        }
+
+        public Expression Source { get; }
+        public CelProgramDelegate CelProgramDelegate { get; }
+    }
+
     /// <summary>
     ///     Map for caching descriptor and their expression delegates
     /// </summary>
-    private ConcurrentDictionary<FieldDescriptor, List<CompiledProgram>> DescriptorMap { get; } = new();
+    private ConcurrentDictionary<FieldDescriptor, List<CompiledExpression>> DescriptorMap { get; } = new();
 
     private CelEnvironment CelEnvironment { get; }
 
@@ -39,19 +51,8 @@ public class ConstraintCache
             // Message null means there were no constraints resolved.
             return new List<CompiledProgram>();
         }
-
-        // Env finalEnv =
-        //     env.extend(
-        //         EnvOption.types(message.getDefaultInstanceForType()),
-        //         EnvOption.declarations(
-        //             Decls.newVar(
-        //                 Variable.THIS_NAME, DescriptorMappings.getCELType(fieldDescriptor, forItems)),
-        //             Decls.newVar(
-        //                 Variable.RULES_NAME,
-        //                 Decls.newObjectType(message.getDescriptorForType().getFullName()))));
-        //ProgramOption rulesOption = ProgramOption.globals(Variable.newRulesVariable(message));
-
-
+   
+        //build a cache of all possible constraints for this descriptor field
         foreach (var constraintFieldDescriptor in rulesMessage.Descriptor.Fields.InDeclarationOrder())
         {
             if (!DescriptorMap.ContainsKey(constraintFieldDescriptor))
@@ -62,88 +63,65 @@ public class ConstraintCache
                 {
                     continue;
                 }
-                //Console.WriteLine();
-                //Console.WriteLine($"Checking rule: {constraintFieldDescriptor.FullName}");
-
-                if (constraintFieldDescriptor.HasPresence)
-                {
-                    var hasRule = constraintFieldDescriptor.Accessor.HasValue(rulesMessage);
-                    if (!hasRule)
-                    {
-                        //Console.WriteLine($"Skipping rule: {constraintFieldDescriptor.FullName}");
-
-                        continue;
-                    }
-                }
-                else if (constraintFieldDescriptor.IsMap)
-                {
-                    var value = (IDictionary)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
-                    if (value.Count == 0)
-                    {
-                        //Console.WriteLine($"Skipping rule: {constraintFieldDescriptor.FullName}");
-
-                        continue;
-                    }
-                }
-                else if (constraintFieldDescriptor.IsRepeated)
-                {
-                    var value = (IList)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
-                    if (value.Count == 0)
-                    {
-
-                        continue;
-                    }
-                }
-                else if (constraintFieldDescriptor.FieldType == FieldType.Bool)
-                {
-                    var value = (bool)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
-                    if (!value)
-                    {
-                        //Console.WriteLine($"Skipping rule: {constraintFieldDescriptor.FullName}");
-                        continue;
-                    }
-                }
 
                 var constraints = options.GetExtension(PrivateExtensions.Field);
 
                 var expressions = Expression.FromPrivConstraints(constraints.Cel).ToList();
 
-                var compiledPrograms = new List<CompiledProgram>();
+                var compiledPrograms = new List<CompiledExpression>();
 
                 foreach (var expression in expressions)
                 {
-                    //Console.WriteLine("  --  " + expression.ExpressionText);
                     var celExpression = CelEnvironment.Compile(expression.ExpressionText);
-                    // var variables = new Dictionary<string, object?>();
-                    // var result = celExpression.Invoke(variables);
-                    //
-                    //
-                    // if (result is string resultString)
-                    // {
-                    //     if (string.IsNullOrEmpty(resultString))
-                    //     {
-                    //         continue;
-                    //     }
-                    // }
-                    // else if (result is bool resultBool)
-                    // {
-                    //     if (resultBool)
-                    //     {
-                    //         continue;
-                    //     }
-                    // }
 
-
-                    var compiledProgram = new CompiledProgram(celExpression, rulesMessage, expression);
-                    compiledPrograms.Add(compiledProgram);
+                    var compiledExpressionItem = new CompiledExpression(expression, celExpression);
+                    compiledPrograms.Add(compiledExpressionItem);
                 }
 
                 DescriptorMap[constraintFieldDescriptor] = compiledPrograms;
             }
-
-            if (DescriptorMap.TryGetValue(constraintFieldDescriptor, out var compiledProgramsForField))
+        }
+        
+        //now check to see if we need to add the constraint at all based on the specific rules for this field.
+        foreach (var constraintFieldDescriptor in rulesMessage.Descriptor.Fields.InDeclarationOrder())
+        {
+            if (constraintFieldDescriptor.HasPresence)
             {
-                compiledProgramList.AddRange(compiledProgramsForField);
+                var hasRule = constraintFieldDescriptor.Accessor.HasValue(rulesMessage);
+                if (!hasRule)
+                {
+                    continue;
+                }
+            }
+            else if (constraintFieldDescriptor.IsMap)
+            {
+                var value = (IDictionary)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                if (value.Count == 0)
+                {
+                    continue;
+                }
+            }
+            else if (constraintFieldDescriptor.IsRepeated)
+            {
+                var value = (IList)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                if (value.Count == 0)
+                {
+                    continue;
+                }
+            }
+            else if (constraintFieldDescriptor.FieldType == FieldType.Bool)
+            {
+                var value = (bool)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                if (!value)
+                {
+                    continue;
+                }
+            }
+
+            if (DescriptorMap.TryGetValue(constraintFieldDescriptor, out var compiledExpressionList))
+            {
+                var compiledPrograms = compiledExpressionList.Select(c => new CompiledProgram(c.CelProgramDelegate, rulesMessage, c.Source)).ToList();
+                compiledProgramList.AddRange(compiledPrograms);
             }
         }
 
@@ -189,7 +167,6 @@ public class ConstraintCache
 
     private IMessage? ResolveConstraints(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems)
     {
-
         var fieldOneofs = FieldConstraints.Descriptor.Oneofs;
         if (fieldOneofs == null || fieldOneofs.Count == 0)
         {
@@ -197,8 +174,11 @@ public class ConstraintCache
             return null;
         }
 
-        var oneofDescriptor = fieldOneofs[0];
-
+        var oneofFieldDescriptor = fieldOneofs[0].Accessor.GetCaseFieldDescriptor(fieldConstraints);
+        if (oneofFieldDescriptor == null)
+        {
+            return null;
+        }
 
         // Get the expected constraint descriptor based on the provided field descriptor and the flag
         // indicating whether it is for items.
@@ -208,12 +188,11 @@ public class ConstraintCache
             return null;
         }
 
-        var oneofFieldDescriptor = oneofDescriptor.Fields.FirstOrDefault(c => c.FullName == expectedConstraintDescriptor.FullName);
-        if (oneofFieldDescriptor == null)
+        if (oneofFieldDescriptor.FullName != expectedConstraintDescriptor.FullName)
         {
             // If the expected constraint does not match the actual oneof constraint, throw a
             // CompilationError.
-            throw new CompilationException($"Expected constraint '{expectedConstraintDescriptor.Name}', got '{null}' on field '{fieldDescriptor.Name}'.");
+            throw new CompilationException($"Expected constraint '{expectedConstraintDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
         }
 
         return (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldConstraints);

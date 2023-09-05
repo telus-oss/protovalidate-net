@@ -14,6 +14,11 @@ public class OneofEvaluator : IEvaluator
         Required = required;
     }
 
+    public override string ToString()
+    {
+        return $"OneOf Evaluator: {Descriptor.FullName}";
+    }
+
     public bool Tautology => !Required;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)

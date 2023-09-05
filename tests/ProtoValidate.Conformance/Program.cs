@@ -13,14 +13,31 @@ internal class Program
 {
     private static int Main(string[] args)
     {
+        //ConformanceUnitTestParser.GetTestCases();
 
-        var tests = ConformanceUnitTestParser.GetTestCases();
-        //Thread.Sleep(15000);
-        //using (var stdin = new FileStream("input.bin", FileMode.Open))
+        // Thread.Sleep(15000);
+
+        // using (var stdin = Console.OpenStandardInput())
+        // {
+        // using (var input = new System.IO.FileStream(@"D:\OpenSourceLibraries\protovalidate-net\.tmp\bin\input.bin", FileMode.Open))
+        // {
+        //     var request = TestConformanceRequest.Parser.ParseFrom(input);
+        //
+        // }
+        // using (var input = new System.IO.FileStream(@"D:\OpenSourceLibraries\protovalidate-net\.tmp\bin\output.bin", FileMode.Open))
+        // {
+        //     var response = TestConformanceResponse.Parser.ParseFrom(input);
+        //
+        // }
+        //
+
+
         using (var stdin = Console.OpenStandardInput())
         {
             using (var stdout = Console.OpenStandardOutput())
             {
+
+               
                 var request = TestConformanceRequest.Parser.ParseFrom(stdin);
 
                 if (request == null)
@@ -29,7 +46,9 @@ internal class Program
                 }
 
                 var response = TestConformance(request);
+
                 response.WriteTo(stdout);
+                stdout.Flush();
                 return 0;
             }
         }
@@ -67,7 +86,7 @@ internal class Program
         return response;
     }
 
-   
+
     private static TestResult TestCase(Validator validator, TypeRegistry typeRegistry, Any testCase)
     {
         if (testCase == null)

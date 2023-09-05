@@ -58,7 +58,7 @@ help:  ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-15s %s\n", $$1, $$2}'
 
 .PHONY: generate
-generate: ## generate files
+generate: $(BIN)/buf ## generate files
 	$(BIN)/buf generate --template buf.gen.yaml buf.build/bufbuild/protovalidate:$(PROTOVALIDATE_VERSION)
 	$(BIN)/buf generate --template tests/ProtoValidate.Conformance/buf.gen.yaml -o tests/ProtoValidate.Conformance/ buf.build/bufbuild/protovalidate-testing:$(PROTOVALIDATE_VERSION)
 

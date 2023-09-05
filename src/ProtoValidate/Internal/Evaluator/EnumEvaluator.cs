@@ -24,6 +24,11 @@ public class EnumEvaluator : IEvaluator
         }
     }
 
+    public override string ToString()
+    {
+        return "Enum Evaluator";
+    }
+
     public bool Tautology => false;
 
     /// <summary>

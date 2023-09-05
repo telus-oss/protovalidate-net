@@ -1,5 +1,6 @@
 ﻿using Buf.Validate;
 using Google.Protobuf.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace ProtoValidate.Internal.Evaluator;
 
@@ -23,6 +24,11 @@ public class AnyEvaluator : IEvaluator
         {
             NotInLookup = notInList.ToDictionary(c => c, c => (object?)null);
         }
+    }
+
+    public override string ToString()
+    {
+        return $"AnyEvaluator In: {InLookup?.Count ?? 0} NotIn: {NotInLookup?.Count ?? 0}";
     }
 
     public bool Tautology => (InLookup != null && InLookup.Count == 0) && (NotInLookup != null && NotInLookup.Count == 0);

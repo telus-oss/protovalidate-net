@@ -5,11 +5,15 @@ namespace ProtoValidate.Internal.Cel;
 
 public class CompiledProgramsEvaluator : IEvaluator
 {
-    private List<CompiledProgram> CompiledPrograms { get; }
+    public List<CompiledProgram> CompiledPrograms { get; }
 
     public CompiledProgramsEvaluator(List<CompiledProgram> compiledPrograms)
     {
         CompiledPrograms = compiledPrograms ?? throw new ArgumentNullException(nameof(compiledPrograms));
+    }
+    public override string ToString()
+    {
+        return $"CompiledPrograms Evaluator: {CompiledPrograms.Count}";
     }
 
     public bool Tautology => CompiledPrograms.Count == 0;
@@ -25,19 +29,16 @@ public class CompiledProgramsEvaluator : IEvaluator
         foreach (var compiledProgram in CompiledPrograms)
         {
 
-            Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
+            //Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
 
             var violation = compiledProgram.Eval(variables);
             if (violation != null)
             {
-                Console.WriteLine($"  Rule found violation: {violation}");
+                violation.Value = value?.Value<object?>();
+                //Console.WriteLine($"  Rule found violation: {violation}");
                 violationList.Add(violation);
             }
-            else
-            {
-                Console.WriteLine($"  Rule has no violations.");
-            }
-            Console.WriteLine();
+            //Console.WriteLine();
 
             if (failFast)
             {

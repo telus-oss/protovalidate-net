@@ -28,7 +28,7 @@ public class Validator
         FailFast = config.FailFast;
         var functions = new Dictionary<string, CelFunctionDelegate>();
 
-        
+
         FileDescriptor[] fileDescriptors = Array.Empty<FileDescriptor>();
 
         var celEnvironment = new CelEnvironment(fileDescriptors, "");
@@ -74,5 +74,74 @@ public class Validator
 
         var descriptors = messages.Select(c => c.Descriptor).Distinct();
         LoadDescriptors(descriptors);
+    }
+
+    private string GetEvaluatorDebugString(IEvaluator evaluator, int nestLevel, List<IEvaluator> visitedEvaluators)
+    {
+        if (visitedEvaluators.Contains(evaluator))
+        {
+            return new string(' ', nestLevel * 4) + evaluator + " (Nested)" + Environment.NewLine;
+
+        }
+
+        visitedEvaluators.Add(evaluator);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append(new string(' ', nestLevel * 4)).AppendLine(evaluator.ToString());
+
+        if (evaluator is MessageEvaluator messageEvaluator)
+        {
+            foreach (var subEvaluator in messageEvaluator.Evaluators)
+            {
+                sb.Append(GetEvaluatorDebugString(subEvaluator, nestLevel + 1, visitedEvaluators));
+            }
+
+        }
+        else if (evaluator is AnyEvaluator anyEvaluator)
+        {
+
+        }
+
+        else if (evaluator is EnumEvaluator enumEvaluator)
+        {
+
+        }
+        else if (evaluator is FieldEvaluator fieldEvaluator)
+        {
+            sb.Append(GetEvaluatorDebugString(fieldEvaluator.ValueEvaluator, nestLevel + 1, visitedEvaluators));
+        }
+        else if (evaluator is ListEvaluator listEvaluator)
+        {
+            sb.Append(GetEvaluatorDebugString(listEvaluator.ItemConstraints, nestLevel + 1, visitedEvaluators));
+        }
+        else if (evaluator is OneofEvaluator oneofEvaluator)
+        {
+
+        }
+        else if (evaluator is MapEvaluator mapEvaluator)
+        {
+            sb.Append(GetEvaluatorDebugString(mapEvaluator.KeyEvaluator, nestLevel + 1, visitedEvaluators));
+            sb.Append(GetEvaluatorDebugString(mapEvaluator.ValueEvaluator, nestLevel + 1, visitedEvaluators));
+
+        }
+        else if (evaluator is ValueEvaluator valueEvaluator)
+        {
+            foreach (var subEvaluator in valueEvaluator.Evaluators)
+            {
+                sb.Append(GetEvaluatorDebugString(subEvaluator, nestLevel + 1, visitedEvaluators));
+            }
+        }
+        else if (evaluator is UnknownDescriptorEvaluator unknownDescriptorEvaluator)
+        {
+
+        }
+        else if (evaluator is CompiledProgramsEvaluator compiledProgramsEvaluator)
+        {
+            foreach (var compiledProgram in compiledProgramsEvaluator.CompiledPrograms)
+            {
+                sb.AppendLine(new string(' ', (nestLevel + 1) * 4) + compiledProgram.Source.Id + " - " + compiledProgram.Source.ExpressionText);
+            }
+        }
+        return sb.ToString();
     }
 }

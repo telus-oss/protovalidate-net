@@ -83,7 +83,7 @@ public class EvaluatorBuilder
             return evaluator;
         }
 
-        var messageEvaluator = new MessageEvaluator();
+        var messageEvaluator = new MessageEvaluator(messageDescriptor);
         EvaluatorMap.TryAdd(messageDescriptor, messageEvaluator);
         BuildMessage(messageDescriptor, messageEvaluator);
         return messageEvaluator;
@@ -186,11 +186,12 @@ public class EvaluatorBuilder
         if (fieldDescriptor.FieldType != FieldType.Message
             || fieldConstraints.Skipped
             || fieldDescriptor.IsMap
-            || (fieldDescriptor.IsRepeated && !forItems))
+            || (fieldDescriptor.IsRepeated && !forItems)
+            || GoogleWellKnownTypes.Contains(fieldDescriptor.MessageType.FullName))
         {
             return;
         }
-
+        
         var embedEval = Build(fieldDescriptor.MessageType);
         valueEvaluatorEval.AddEvaluator(embedEval);
     }

@@ -34,24 +34,73 @@ namespace ProtoValidate.Conformance.Tests
 
             var testResults = Validate(testData!);
 
-            if (!string.IsNullOrWhiteSpace(testResults.RuntimeError))
+            //test for Runtime.
+            Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), string.IsNullOrWhiteSpace(testResults.RuntimeError));
+
+            //test for compilation errors
+            Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError), string.IsNullOrWhiteSpace(testResults.CompilationError));
+
+            //test for unexpected errors
+            Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), string.IsNullOrWhiteSpace(testResults.UnexpectedError));
+
+
+            // //test for compilationErrors
+            // if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError) || !string.IsNullOrWhiteSpace(testResults.CompilationError))
+            // {
+            //     if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError))
+            //     {
+            //         Assert.Pass();
+            //     }
+            //     else
+            //     {
+            //         Assert.Fail(testResults.CompilationError);
+            //     }
+            //     return;
+            // }
+            // if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError) || !string.IsNullOrWhiteSpace(testResults.UnexpectedError))
+            // {
+            //     if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError))
+            //     {
+            //         Assert.Pass();
+            //     }
+            //     else
+            //     {
+            //         Assert.Fail(testResults.UnexpectedError);
+            //     }
+            //     return;
+            // }
+
+            if (testCase.ExpectedResult == null)
             {
-                Assert.Fail(testResults.RuntimeError);
-                return;
-            }
-            if (!string.IsNullOrWhiteSpace(testResults.CompilationError))
-            {
-                Assert.Fail(testResults.CompilationError);
-                return;
-            }
-            if (!string.IsNullOrWhiteSpace(testResults.UnexpectedError))
-            {
-                Assert.Fail(testResults.UnexpectedError);
+                Assert.Fail("We need expected result to have a value.");
                 return;
             }
 
             if (!testCase.ExpectedResult.Success || !testResults.Success)
             {
+                if (testCase.ExpectedResult.ValidationError != null
+                    && testResults.ValidationError != null
+                    && testCase.ExpectedResult.ValidationError.Violations_.Count != testResults.ValidationError.Violations_.Count)
+                {
+                    foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_)
+                    {
+                        if (!testResults.ValidationError.Violations_.Any(c => c.ConstraintId == violation.ConstraintId))
+                        {
+                            Console.WriteLine($"Expected violation {violation.ConstraintId} but was not validated.");
+                            Console.WriteLine();
+                        }
+                    }
+                    foreach (var violation in testResults.ValidationError.Violations_)
+                    {
+                        if (!testCase.ExpectedResult.ValidationError.Violations_.Any(c => c.ConstraintId == violation.ConstraintId))
+                        {
+                            Console.WriteLine($"Got violation {violation.ConstraintId} but was not expected.");
+                            Console.WriteLine();
+                        }
+                    }
+                }
+
+
                 var settings = JsonFormatter.Settings.Default.WithIndentation().WithTypeRegistry(TypeRegistry);
                 JsonFormatter formatter = new JsonFormatter(settings);
                 var inputJson = "";
@@ -72,7 +121,10 @@ namespace ProtoValidate.Conformance.Tests
                 Console.WriteLine("Expected");
                 if (testCase.ExpectedResult.ValidationError != null)
                 {
-                    foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_)
+
+
+
+                    foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_.OrderBy(c => c.ConstraintId).ThenBy(c => c.FieldPath))
                     {
                         Console.WriteLine("{0} {1} {2}", violation.ConstraintId, violation.ForKey, violation.FieldPath);
                         Console.WriteLine(violation.Message);
@@ -83,11 +135,10 @@ namespace ProtoValidate.Conformance.Tests
                 Console.WriteLine("Actual");
                 if (testResults.ValidationError != null)
                 {
-                    foreach (var violation in testResults.ValidationError.Violations_)
+                    foreach (var violation in testResults.ValidationError.Violations_.OrderBy(c => c.ConstraintId).ThenBy(c => c.FieldPath))
                     {
-                        Console.WriteLine("{0} {1} {2}", violation.ConstraintId, violation, violation.FieldPath);
-                        Console.WriteLine(violation.Message);
-                        Console.WriteLine();
+                        Console.WriteLine(violation);
+                        Console.WriteLine(violation.Value);
                     }
                 }
             }
@@ -139,7 +190,7 @@ namespace ProtoValidate.Conformance.Tests
             {
                 return new TestResult
                 {
-                    RuntimeError = e.ToString()
+                    RuntimeError = !string.IsNullOrWhiteSpace(e.SourceExpression?.Message) ? e.SourceExpression.Message : e.Message
                 };
             }
             catch (Exception e)

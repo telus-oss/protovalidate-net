@@ -1,5 +1,6 @@
 ﻿using Buf.Validate.Conformance.Cases;
 using NUnit.Framework;
+using ProtoValidate.Exceptions;
 
 namespace ProtoValidate.Conformance.Tests;
 
@@ -88,5 +89,30 @@ public class Int64Tests
         var validationResult = Validator!.Validate(message);
         Assert.IsFalse(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
+    }
+
+    [Test]
+    public void Double_IncorrectType()
+    {
+        // message DoubleIncorrectType {
+        //     double val = 1 [(buf.validate.field).float.gt = 0];
+        // }
+
+
+
+        var message = new DoubleIncorrectType
+        {
+            Val = 123
+        };
+
+        try
+        {
+            var validationResult = Validator!.Validate(message);
+            Assert.Fail("Expected compilation exception.");
+        }
+        catch (CompilationException)
+        {
+            
+        }
     }
 }

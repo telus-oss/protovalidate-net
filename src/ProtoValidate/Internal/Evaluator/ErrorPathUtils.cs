@@ -14,11 +14,11 @@ public static class ErrorPathUtils
                                      var prefixedFieldPath = "";
                                      if (string.IsNullOrEmpty(fieldPath))
                                      {
-                                         prefixedFieldPath = fieldPath;
+                                         prefixedFieldPath = prefix;
                                      }
                                      else if (fieldPath.StartsWith("[", StringComparison.Ordinal))
                                      {
-                                         prefixedFieldPath = prefix + prefixedFieldPath;
+                                         prefixedFieldPath = prefix + fieldPath;
                                      }
                                      else
                                      {
@@ -27,6 +27,7 @@ public static class ErrorPathUtils
 
                                      var violation = c.Clone();
                                      violation.FieldPath = prefixedFieldPath;
+                                     violation.Value = c.Value;
 
                                      return violation;
                                  }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using Buf.Validate;
+using Google.Protobuf;
 using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
@@ -28,6 +29,11 @@ public class FieldEvaluator : IEvaluator
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
         Required = required;
         Optional = optional;
+    }
+
+    public override string ToString()
+    {
+        return $"Field Evaluator: {Descriptor.FullName}";
     }
 
     public bool Tautology => !Required && ValueEvaluator.Tautology;
@@ -68,7 +74,8 @@ public class FieldEvaluator : IEvaluator
                 new Violation
                 {
                     ConstraintId = "required",
-                    Message = "Value is required."
+                    Message = "Value is required.",
+                    FieldPath = Descriptor.Name
                 }
             });
         }
@@ -79,6 +86,28 @@ public class FieldEvaluator : IEvaluator
         }
 
         var fieldValue = Descriptor.Accessor.GetValue(message);
+        
+        if (ValueEvaluator.IgnoreEmpty)
+        {
+            if (fieldValue is string stringFieldValue)
+            {
+                //strings are always initialized even if they have no value
+                //so we need to check their length for the IgnoreEmpty flag.
+                if (string.IsNullOrEmpty(stringFieldValue))
+                {
+                    return ValidationResult.Empty;
+                }
+            }
+            if (fieldValue is ByteString byteStringFieldValue)
+            {
+                //ByteStrings are always initialized even if they have no value
+                //so we need to check their length for the IgnoreEmpty flag.
+                if (byteStringFieldValue.Length == 0)
+                {
+                    return ValidationResult.Empty;
+                }
+            }
+        }
 
         var evalResult = ValueEvaluator.Evaluate(new ObjectValue(Descriptor, fieldValue), failFast);
         var violations = evalResult.Violations.PrefixErrorPaths("{0}", Descriptor.Name);

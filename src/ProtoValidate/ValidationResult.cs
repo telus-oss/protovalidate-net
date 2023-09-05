@@ -1,49 +1,60 @@
 ﻿using System.Text;
 using Buf.Validate;
 
-namespace ProtoValidate;
-
-public class ValidationResult
+namespace Buf.Validate
 {
-    public static ValidationResult Empty {get;} = new ValidationResult();
-
-    public ValidationResult() { }
-
-    public ValidationResult(IEnumerable<Violation> violations)
+    public partial class Violation
     {
-        if (violations == null)
-        {
-            throw new ArgumentNullException(nameof(violations));
-        }
-        Violations.AddRange(violations);
+        public object? Value { get; set; }
     }
+}
 
-    public List<Violation> Violations { get; } = new();
+namespace ProtoValidate
+{
 
-    public bool IsSuccess => Violations.Count == 0;
-
-    public override string ToString()
+    public class ValidationResult
     {
-        if (IsSuccess)
-        {
-            return "Validation success";
-        }
+        public static ValidationResult Empty { get; } = new ValidationResult();
 
-        var builder = new StringBuilder();
+        public ValidationResult() { }
 
-        builder.Append("Validation error: ");
-        foreach (var violation in Violations)
+        public ValidationResult(IEnumerable<Violation> violations)
         {
-            builder.Append("\n - ");
-            if (!string.IsNullOrEmpty(violation.FieldPath))
+            if (violations == null)
             {
-                builder.Append(violation.FieldPath);
-                builder.Append(": ");
+                throw new ArgumentNullException(nameof(violations));
             }
 
-            builder.Append(string.Format("{0} [{1}]", violation.Message, violation.ConstraintId));
+            Violations.AddRange(violations);
         }
 
-        return builder.ToString();
+        public List<Violation> Violations { get; } = new();
+
+        public bool IsSuccess => Violations.Count == 0;
+
+        public override string ToString()
+        {
+            if (IsSuccess)
+            {
+                return "Validation success";
+            }
+
+            var builder = new StringBuilder();
+
+            builder.Append("Validation error: ");
+            foreach (var violation in Violations)
+            {
+                builder.Append("\n - ");
+                if (!string.IsNullOrEmpty(violation.FieldPath))
+                {
+                    builder.Append(violation.FieldPath);
+                    builder.Append(": ");
+                }
+
+                builder.Append(string.Format("{0} [{1}]", violation.Message, violation.ConstraintId));
+            }
+
+            return builder.ToString();
+        }
     }
 }
