@@ -25,13 +25,19 @@ public class CompiledProgramsEvaluator : IEvaluator
         foreach (var compiledProgram in CompiledPrograms)
         {
 
-            Console.WriteLine($"Evaluating program: {compiledProgram.Source.ExpressionText}");
+            Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
 
             var violation = compiledProgram.Eval(variables);
             if (violation != null)
             {
+                Console.WriteLine($"  Rule found violation: {violation}");
                 violationList.Add(violation);
             }
+            else
+            {
+                Console.WriteLine($"  Rule has no violations.");
+            }
+            Console.WriteLine();
 
             if (failFast)
             {

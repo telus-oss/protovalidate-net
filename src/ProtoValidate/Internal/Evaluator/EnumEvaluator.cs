@@ -5,6 +5,7 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class EnumEvaluator : IEvaluator
 {
+    private IList<EnumValueDescriptor> ValueDescriptors { get; }
     private Dictionary<int, EnumValueDescriptor> Values { get; }
 
     public EnumEvaluator(IList<EnumValueDescriptor> valueDescriptors)
@@ -14,6 +15,7 @@ public class EnumEvaluator : IEvaluator
             throw new ArgumentNullException(nameof(valueDescriptors));
         }
 
+        ValueDescriptors = valueDescriptors;
         Values = new Dictionary<int, EnumValueDescriptor>();
 
         foreach (var descriptor in valueDescriptors)
@@ -32,13 +34,15 @@ public class EnumEvaluator : IEvaluator
     /// <returns></returns>
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
-        var enumValue = value?.Value<EnumValueDescriptor>();
+        var enumValue = value?.Value<object?>();
         if (enumValue == null)
         {
             return ValidationResult.Empty;
         }
 
-        if (!Values.ContainsKey(enumValue.Number))
+        var enumIntValue = (int)enumValue;
+
+        if (!Values.ContainsKey(enumIntValue))
         {
             return new ValidationResult(new[]
             {

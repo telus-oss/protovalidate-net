@@ -16,7 +16,8 @@ public class EvaluatorBuilder
     private bool DisableLazy { get; }
     private CelEnvironment CelEnvironment { get; }
     private ConstraintCache Constraints { get; }
-    private static readonly string[] GoogleWellKnownTypes = 
+
+    private static readonly string[] GoogleWellKnownTypes =
     {
         "google.protobuf.DoubleValue",
         "google.protobuf.FloatValue",
@@ -31,6 +32,7 @@ public class EvaluatorBuilder
         "google.protobuf.Duration",
         "google.protobuf.Any"
     };
+
     public EvaluatorBuilder(CelEnvironment celEnvironment, bool disableLazy)
     {
         DisableLazy = disableLazy;
@@ -86,7 +88,7 @@ public class EvaluatorBuilder
         BuildMessage(messageDescriptor, messageEvaluator);
         return messageEvaluator;
     }
-    
+
     private void BuildMessage(MessageDescriptor messageDescriptor, MessageEvaluator messageEvaluator)
     {
         try
@@ -124,6 +126,7 @@ public class EvaluatorBuilder
         {
             return;
         }
+
         foreach (var oneofDesc in oneofs)
         {
             var oneofConstraints = ConstraintResolver.ResolveOneofConstraints(oneofDesc);
@@ -202,7 +205,7 @@ public class EvaluatorBuilder
             return;
         }
 
-        FieldDescriptor? expectedWrapperDescriptor = DescriptorMappings.ExpectedWrapperConstraints(fieldDescriptor.MessageType.FullName);
+        var expectedWrapperDescriptor = DescriptorMappings.ExpectedWrapperConstraints(fieldDescriptor.MessageType.FullName);
         if (expectedWrapperDescriptor == null)
         {
             return;
@@ -245,6 +248,7 @@ public class EvaluatorBuilder
         {
             return;
         }
+
         var anyEvaluatorEval = new AnyEvaluator(typeUrlDesc, fieldConstraints?.Any?.In, fieldConstraints?.Any?.NotIn);
         valueEvaluatorEval.AddEvaluator(anyEvaluatorEval);
     }
@@ -270,21 +274,13 @@ public class EvaluatorBuilder
             return;
         }
 
-        if (fieldConstraints?.Map?.Keys == null && fieldConstraints?.Map?.Values == null)
-        {
-            return;
-        }
+     
+        var mapKeyFieldConstraints = fieldConstraints.Map?.Keys ?? new FieldConstraints();
+        var mapValuesFieldConstraints = fieldConstraints.Map?.Values ?? new FieldConstraints();
 
         var mapEval = new MapEvaluator(fieldConstraints, fieldDescriptor);
-        if (fieldConstraints.Map?.Keys != null)
-        {
-            BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), fieldConstraints.Map.Keys, true, mapEval.KeyEvaluator);
-        }
-
-        if (fieldConstraints.Map?.Values != null)
-        {
-            BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), fieldConstraints.Map.Values, true, mapEval.ValueEvaluator);
-        }
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), mapKeyFieldConstraints, true, mapEval.KeyEvaluator);
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), mapValuesFieldConstraints, true, mapEval.ValueEvaluator);
 
         valueEvaluatorEval.AddEvaluator(mapEval);
     }
@@ -296,13 +292,10 @@ public class EvaluatorBuilder
             return;
         }
 
-        if (fieldConstraints.Repeated?.Items == null)
-        {
-            return;
-        }
+        var repeatedFieldConstraints = fieldConstraints.Repeated?.Items ?? new FieldConstraints();
 
         var listEval = new ListEvaluator(fieldConstraints, fieldDescriptor);
-        BuildValue(fieldDescriptor, fieldConstraints.Repeated.Items, true, listEval.ItemConstraints);
+        BuildValue(fieldDescriptor, repeatedFieldConstraints, true, listEval.ItemConstraints);
         valueEvaluatorEval.AddEvaluator(listEval);
     }
 

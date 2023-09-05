@@ -28,13 +28,14 @@ public class Validator
         FailFast = config.FailFast;
         var functions = new Dictionary<string, CelFunctionDelegate>();
 
-        Functions.RegisterFunctions(functions);
-        FormatFunction.RegisterFunctions(functions);
         
         FileDescriptor[] fileDescriptors = Array.Empty<FileDescriptor>();
 
-        var celEnvironment = new CelEnvironment(functions, fileDescriptors, "");
+        var celEnvironment = new CelEnvironment(fileDescriptors, "");
         celEnvironment.StrictTypeComparison = true;
+        celEnvironment.RegisterProtoValidateFunctions();
+        celEnvironment.RegisterProtoValidateFormatFunction();
+
 
         EvaluatorBuilder = new EvaluatorBuilder(celEnvironment, config.DisableLazy);
     }

@@ -54,7 +54,13 @@ namespace ProtoValidate.Conformance.Tests
             {
                 var settings = JsonFormatter.Settings.Default.WithIndentation().WithTypeRegistry(TypeRegistry);
                 JsonFormatter formatter = new JsonFormatter(settings);
-                var inputJson = formatter.Format(testData);
+                var inputJson = "";
+
+                try
+                {
+                    inputJson = formatter.Format(testData);
+                }
+                catch (InvalidOperationException) { }
 
                 Console.WriteLine("Input");
                 Console.WriteLine(testData.GetType().Name);

@@ -5,8 +5,8 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class MapEvaluator : IEvaluator
 {
-    public ValueEvaluator? KeyEvaluator { get; }
-    public ValueEvaluator? ValueEvaluator { get; }
+    public ValueEvaluator KeyEvaluator { get; }
+    public ValueEvaluator ValueEvaluator { get; }
 
     public MapEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
@@ -24,18 +24,14 @@ public class MapEvaluator : IEvaluator
         var keyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
         var valueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
 
-        if (mapRules.Keys != null)
-        {
-            KeyEvaluator = new ValueEvaluator(mapRules.Keys, keyDescriptor);
-        }
+        var mapRulesKeysFieldConstraints = mapRules?.Keys ?? new FieldConstraints();
+        var mapRulesValuesFieldConstraints = mapRules?.Values ?? new FieldConstraints();
 
-        if (mapRules.Values != null)
-        {
-            ValueEvaluator = new ValueEvaluator(mapRules.Values, valueDescriptor);
-        }
+        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldConstraints, keyDescriptor);
+        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor);
     }
 
-    public bool Tautology => (KeyEvaluator != null && KeyEvaluator.Tautology) || (ValueEvaluator != null && ValueEvaluator.Tautology);
+    public bool Tautology => KeyEvaluator.Tautology && ValueEvaluator.Tautology;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
@@ -66,25 +62,12 @@ public class MapEvaluator : IEvaluator
 
     private List<Violation> EvalPairs(IValue key, IValue value, bool failFast)
     {
-        List<Violation> keyViolations;
-        if (KeyEvaluator != null)
-        {
-            keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
-        }
-        else
-        {
-            keyViolations = new List<Violation>();
-        }
-
+        var keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
         List<Violation> valueViolations;
         if (failFast && keyViolations.Count > 0)
         {
             // Don't evaluate value constraints if failFast is enabled and keys failed validation.
             // We still need to continue execution to the end to properly prefix violation field paths.
-            valueViolations = new List<Violation>();
-        }
-        else if (ValueEvaluator == null)
-        {
             valueViolations = new List<Violation>();
         }
         else

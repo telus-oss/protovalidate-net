@@ -1,21 +1,51 @@
-﻿using System.Net;
+﻿using System.Collections;
+using System.Net;
 using System.Net.Sockets;
 using Cel;
-using Cel.Internal;
+using Google.Protobuf;
 
 namespace ProtoValidate.Internal.Cel;
 
 public static class Functions
 {
-    public static void RegisterFunctions(IDictionary<string, CelFunctionDelegate> dict)
+    public static void RegisterProtoValidateFunctions(this CelEnvironment celEnvironment)
     {
-        dict.Add("isNan", IsNan);
-        dict.Add("isInf", IsInf);
-        dict.Add("isEmail", IsEmail);
-        dict.Add("isHostname", IsHostname);
-        dict.Add("isIp", IsIP);
-        dict.Add("isUri", IsUri);
-        dict.Add("isUriRef", IsUriRef);
+        celEnvironment.RegisterFunction("isNan", new[] { typeof(double) }, IsNan);
+        celEnvironment.RegisterFunction("isNan", new[] { typeof(float) }, IsNan);
+        celEnvironment.RegisterFunction("isInf", new[] { typeof(double) }, IsInf);
+        celEnvironment.RegisterFunction("isInf", new[] { typeof(float) }, IsInf);
+
+        celEnvironment.RegisterFunction("isEmail", new[] { typeof(string) }, IsEmail);
+        celEnvironment.RegisterFunction("isHostname", new[] { typeof(string) }, IsHostname);
+        celEnvironment.RegisterFunction("isIp", new[] { typeof(string) }, IsIP);
+        celEnvironment.RegisterFunction("isIp", new[] { typeof(string), typeof(long) }, IsIP);
+        celEnvironment.RegisterFunction("isUri", new[] { typeof(string) }, IsUri);
+        celEnvironment.RegisterFunction("isUriRef", new[] { typeof(string) }, IsUriRef);
+
+        celEnvironment.RegisterFunction("unique", new[] { typeof(IEnumerable) }, Unique);
+
+        celEnvironment.RegisterFunction("startsWith", new[] { typeof(ByteString), typeof(ByteString) }, StartsWith_Bytes);
+        celEnvironment.RegisterFunction("endsWith", new[] { typeof(ByteString), typeof(ByteString) }, EndsWith_Bytes);
+        celEnvironment.RegisterFunction("contains", new[] { typeof(ByteString), typeof(ByteString) }, Contains_Bytes);
+    }
+
+    private static object? Unique(object?[] args)
+    {
+        if (args.Length != 1)
+        {
+            throw new CelExpressionParserException("Unique function requires 1 argument.");
+        }
+
+        var value = args[0];
+
+        if (value is IEnumerable valueList)
+        {
+            var list = valueList.Cast<object?>().ToList();
+            return list.Count == list.Distinct().Count();
+        }
+
+
+        throw new CelNoSuchOverloadException($"No overload exists to for 'unique' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     private static object? IsNan(object?[] args)
@@ -229,6 +259,7 @@ public static class Functions
 
         return Uri.TryCreate(valueString, UriKind.Absolute, out var uri);
     }
+
     private static object? IsUriRef(object?[] args)
     {
         if (args.Length != 1)
@@ -253,5 +284,115 @@ public static class Functions
         }
 
         return false;
+    }
+
+    private static object StartsWith_Bytes(object?[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new CelExpressionParserException("StartsWith function requires 2 arguments.");
+        }
+
+        if (args[0] is ByteString byteStringValue1 && args[1] is ByteString byteStringValue2)
+        {
+            if (byteStringValue2.Length > byteStringValue1.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < byteStringValue2.Length; i++)
+            {
+                if (byteStringValue1[i] != byteStringValue2[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists for 'startsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
+    }
+
+    private static object EndsWith_Bytes(object?[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new CelExpressionParserException("EndsWith function requires 2 arguments.");
+        }
+
+        if (args[0] is ByteString byteStringValue1 && args[1] is ByteString byteStringValue2)
+        {
+            if (byteStringValue2.Length > byteStringValue1.Length)
+            {
+                return false;
+            }
+
+            var offset = byteStringValue1.Length - byteStringValue2.Length;
+
+            for (var i = 0; i < byteStringValue2.Length; i++)
+            {
+                if (byteStringValue1[i + offset] != byteStringValue2[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
+    }
+
+    private static object Contains_Bytes(object?[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new CelExpressionParserException("EndsWith function requires 2 arguments.");
+        }
+
+        if (args[0] is ByteString byteStringValue1 && args[1] is ByteString byteStringValue2)
+        {
+            if (byteStringValue2.Length > byteStringValue1.Length)
+            {
+                return false;
+            }
+
+            // Two pointers to traverse the arrays
+            int i = 0, j = 0;
+            var n = byteStringValue1.Length;
+            var m = byteStringValue2.Length;
+
+            // Traverse both arrays simultaneously
+            while (i < n && j < m)
+            {
+                // If element matches
+                // increment both pointers
+                if (byteStringValue1[i] == byteStringValue2[j])
+                {
+                    i++;
+                    j++;
+
+                    // If array B is completely
+                    // traversed
+                    if (j == m)
+                    {
+                        return true;
+                    }
+                }
+
+                // If not,
+                // increment i and reset j
+                else
+                {
+                    i = i - j + 1;
+                    j = 0;
+                }
+            }
+
+            return false;
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
     }
 }

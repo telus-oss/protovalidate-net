@@ -13,9 +13,9 @@ public static class FormatFunction
     private static readonly char[] HEX_ARRAY = "0123456789ABCDEF".ToCharArray();
     private static readonly char[] LOWER_HEX_ARRAY = "0123456789abcdef".ToCharArray();
 
-    public static void RegisterFunctions(IDictionary<string, CelFunctionDelegate> dict)
+    public static void RegisterProtoValidateFormatFunction(this CelEnvironment celEnvironment)
     {
-        dict.Add("format", Format);
+        celEnvironment.RegisterFunction("format", new[] { typeof(string), typeof(object?[]) }, Format);
     }
 
     private static object? Format(object?[] args)
