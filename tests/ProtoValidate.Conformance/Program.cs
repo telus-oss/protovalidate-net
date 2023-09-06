@@ -73,8 +73,8 @@ internal class Program
         //build a type registry so that we can unpack the ANY types.
         var typeRegistry = TypeRegistry.FromFiles(combinedFileDescriptors);
 
-        var config = new Config();
-        var validator = new Validator(config);
+        var validator = new Validator();
+        validator.Initialize(combinedFileDescriptors);
 
         var response = new TestConformanceResponse();
         foreach (var requestKvp in request.Cases)

@@ -21,8 +21,8 @@ namespace ProtoValidate.Conformance.Tests
         [SetUp]
         public void Setup()
         {
-            var config = new Config();
-            Validator = new Validator(config);
+            Validator = new Validator();
+            Validator.Initialize(FileDescriptorUtil.GetFileDescriptors());
 
         }
 
