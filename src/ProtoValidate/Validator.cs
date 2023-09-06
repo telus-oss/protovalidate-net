@@ -2,6 +2,7 @@
 using Cel;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
+using Microsoft.Extensions.Options;
 using ProtoValidate.Internal.Cel;
 using ProtoValidate.Internal.Evaluator;
 using ProtoValidate.Internal.Evaluator.Evaluator;
@@ -10,13 +11,26 @@ namespace ProtoValidate;
 
 public class Validator : IValidator
 {
-    private EvaluatorBuilder? EvaluatorBuilder { get; set; }
-    public bool FailFast { get; set; }
-    public bool DisableLazy { get; set; }
+    private ValidatorOptions Options { get; }
 
-    public Validator()
+    private EvaluatorBuilder? EvaluatorBuilder { get; set; }
+
+    public Validator() : this(new ValidatorOptions()) { }
+
+    public Validator(ValidatorOptions options)
     {
-        Initialize(new List<FileDescriptor>());
+        ArgumentNullException.ThrowIfNull(options, nameof(options));
+
+        Options = options;
+        Initialize();
+    }
+
+    public Validator(IOptions<ValidatorOptions> optionsAccessor)
+    {
+        ArgumentNullException.ThrowIfNull(optionsAccessor, nameof(optionsAccessor));
+
+        Options = optionsAccessor.Value;
+        Initialize();
     }
 
     public ValidationResult Validate(IMessage message)
@@ -29,41 +43,34 @@ public class Validator : IValidator
         var descriptor = message.Descriptor;
         var evaluator = EvaluatorBuilder!.Load(descriptor);
 
-        return evaluator.Evaluate(new MessageValue(message), FailFast);
+        return evaluator.Evaluate(new MessageValue(message), Options.FailFast);
     }
 
-    public void Initialize(IEnumerable<FileDescriptor> fileDescriptors)
+    private void Initialize()
     {
-        if (fileDescriptors == null)
-        {
-            throw new ArgumentNullException(nameof(fileDescriptors));
-        }
-
-        var fileDescriptorList = fileDescriptors.ToList();
-
-        foreach (var fileDescriptor in fileDescriptorList)
-        {
-            LoadDescriptors(fileDescriptor.MessageTypes);
-        }
+        var fileDescriptorList = Options.FileDescriptors ?? new List<FileDescriptor>();
 
         var celEnvironment = new CelEnvironment(fileDescriptorList, "");
         celEnvironment.StrictTypeComparison = true;
         celEnvironment.RegisterProtoValidateFunctions();
         celEnvironment.RegisterProtoValidateFormatFunction();
 
-        EvaluatorBuilder = new EvaluatorBuilder(celEnvironment, DisableLazy);
-    }
+        EvaluatorBuilder = new EvaluatorBuilder(celEnvironment, Options.DisableLazy);
 
-    private void LoadDescriptors(IEnumerable<MessageDescriptor> descriptors)
-    {
-        if (descriptors == null)
+        if (Options.PreLoadDescriptors)
         {
-            throw new ArgumentNullException(nameof(descriptors));
-        }
+            foreach (var fileDescriptor in fileDescriptorList)
+            {
+                foreach (var messageDescriptor in fileDescriptor.MessageTypes)
+                {
+                    EvaluatorBuilder.Load(messageDescriptor);
 
-        foreach (var descriptor in descriptors)
-        {
-            EvaluatorBuilder!.Load(descriptor);
+                    foreach (var nestedTypeMessageDescriptor in messageDescriptor.NestedTypes)
+                    {
+                        EvaluatorBuilder.Load(nestedTypeMessageDescriptor);
+                    }
+                }
+            }
         }
     }
 
