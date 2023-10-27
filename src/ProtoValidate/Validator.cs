@@ -19,15 +19,16 @@ public class Validator : IValidator
 
     public Validator(ValidatorOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options, nameof(options));
-
-        Options = options;
+        Options = options ?? throw new ArgumentNullException(nameof(options));
         Initialize();
     }
 
     public Validator(IOptions<ValidatorOptions> optionsAccessor)
     {
-        ArgumentNullException.ThrowIfNull(optionsAccessor, nameof(optionsAccessor));
+        if (optionsAccessor == null)
+        {
+            throw new ArgumentNullException(nameof(optionsAccessor));
+        }
 
         Options = optionsAccessor.Value;
         Initialize();

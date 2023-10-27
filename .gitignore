@@ -1,4 +1,11 @@
-.tmp/
-.vs/
-**/obj/
-**/bin/
+syntax: glob
+.vs/**
+.git/**
+.hg/**
+**/bin/**
+**/obj/**
+*.user
+**/.vs/**
+**/*.nupkg
+.gradle/**
+build/

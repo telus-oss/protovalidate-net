@@ -7,15 +7,24 @@ public static class ServiceCollectionExtensions
 {
     public static void AddProtoValidate(this IServiceCollection serviceCollection)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection, nameof(serviceCollection));
+        if (serviceCollection == null)
+        {
+            throw new ArgumentNullException(nameof(serviceCollection));
+        }
         serviceCollection.TryAddSingleton<IValidator, Validator>();
     }
 
     public static void AddProtoValidate(this IServiceCollection serviceCollection, Action<ValidatorOptions> setOptions)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection, nameof(serviceCollection));
-        ArgumentNullException.ThrowIfNull(setOptions, nameof(setOptions));
-
+        if (serviceCollection == null)
+        {
+            throw new ArgumentNullException(nameof(serviceCollection));
+        }
+        if (setOptions == null)
+        {
+            throw new ArgumentNullException(nameof(setOptions));
+        }
+       
         serviceCollection.TryAddSingleton<IValidator, Validator>();
         serviceCollection.Configure(setOptions);
     }

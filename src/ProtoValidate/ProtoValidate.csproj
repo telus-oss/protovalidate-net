@@ -1,25 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\..\msbuild\package.props" />
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>ProtoValidate</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;net7.0;netcoreapp3.1</TargetFrameworks>
+        <RootNamespace>ProtoValidate</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Proto\**" />
-    <EmbeddedResource Remove="Proto\**" />
-    <None Remove="Proto\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Proto\**" />
+        <EmbeddedResource Remove="Proto\**" />
+        <None Remove="Proto\**" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.24.2" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\cel-net\src\Cel\Cel.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Cel" Version="0.1.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.24.2" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    </ItemGroup>
 
 </Project>
