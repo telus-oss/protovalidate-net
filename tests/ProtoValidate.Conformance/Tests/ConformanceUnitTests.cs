@@ -28,7 +28,7 @@ public class ConformanceUnitTests
     {
         try
         {
-            var result = Validator!.Validate(dynamicMessage);
+            var result = Validator!.Validate(dynamicMessage, false);
             var violations = result.Violations;
             if (violations.Count == 0)
             {

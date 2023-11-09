@@ -4,6 +4,6 @@ namespace ProtoValidate;
 
 public interface IValidator
 {
-    ValidationResult Validate(IMessage message);
+    ValidationResult Validate(IMessage message, bool failFast);
     string GetEvaluatorDebugString(IMessage message);
 }

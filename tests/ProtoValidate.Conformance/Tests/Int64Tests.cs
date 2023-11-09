@@ -23,7 +23,7 @@ public class Int64Tests
             Val = 65
         };
 
-        var validationResult = Validator!.Validate(message);
+        var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
     }
     [Test]
@@ -42,7 +42,7 @@ public class Int64Tests
             Val = 11
         };
 
-        var validationResult = Validator!.Validate(message);
+        var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
     }
@@ -64,7 +64,7 @@ public class Int64Tests
             Val = 2
         };
 
-        var validationResult = Validator!.Validate(message);
+        var validationResult = Validator!.Validate(message, false);
         Assert.IsTrue(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
     }
@@ -86,7 +86,7 @@ public class Int64Tests
             Val = 4
         };
 
-        var validationResult = Validator!.Validate(message);
+        var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
     }
@@ -107,7 +107,7 @@ public class Int64Tests
 
         try
         {
-            var validationResult = Validator!.Validate(message);
+            var validationResult = Validator!.Validate(message, false);
             Assert.Fail("Expected compilation exception.");
         }
         catch (CompilationException)

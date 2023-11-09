@@ -106,7 +106,7 @@ internal class Program
     {
         try
         {
-            var result = validator.Validate(dynamicMessage);
+            var result = validator.Validate(dynamicMessage, false);
             var violations = result.Violations;
             if (violations.Count == 0)
             {

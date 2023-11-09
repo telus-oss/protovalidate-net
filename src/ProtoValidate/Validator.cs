@@ -34,7 +34,7 @@ public class Validator : IValidator
         Initialize();
     }
 
-    public ValidationResult Validate(IMessage message)
+    public ValidationResult Validate(IMessage message, bool failFast)
     {
         if (message == null)
         {
@@ -44,9 +44,9 @@ public class Validator : IValidator
         var descriptor = message.Descriptor;
         var evaluator = EvaluatorBuilder!.Load(descriptor);
 
-        return evaluator.Evaluate(new MessageValue(message), Options.FailFast);
+        return evaluator.Evaluate(new MessageValue(message), failFast);
     }
-
+    
     private void Initialize()
     {
         var fileDescriptorList = Options.FileDescriptors ?? new List<FileDescriptor>();
