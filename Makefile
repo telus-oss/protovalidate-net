@@ -28,7 +28,7 @@ clean:  ## Delete intermediate build artifacts
 
 .PHONY: conformance
 conformance: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./conformance.sh
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Debug/net8.0/win-x64/ProtoValidate.Conformance.exe
 
 .PHONY: generate-license
 generate-license: $(BIN)/license-header  ## Generates license headers for all source files.
