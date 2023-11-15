@@ -33,6 +33,7 @@
             <PackagePath>\</PackagePath>
         </None>
         <None Remove="proto\**\*.proto" />
+        <Content Include="proto\**\*.proto" Pack="true" PackagePath="content/proto"/>
         <Protobuf Include="proto\**\*.proto" ProtoRoot="proto" />
     </ItemGroup>
     <ItemGroup>
