@@ -162,8 +162,8 @@ public class EvaluatorBuilder
 
     private FieldEvaluator BuildField(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints)
     {
-        var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor);
-        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints.Required, fieldDescriptor.HasPresence);
+        var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.IgnoreEmpty);
+        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints.Required, fieldConstraints.IgnoreEmpty || fieldDescriptor.HasPresence);
         BuildValue(fieldDescriptor, fieldConstraints, false, fieldEvaluator.ValueEvaluator);
         return fieldEvaluator;
     }
@@ -239,7 +239,7 @@ public class EvaluatorBuilder
             return;
         }
 
-        var unwrapped = new ValueEvaluator(fieldConstraints, fieldDescriptor);
+        var unwrapped = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.IgnoreEmpty);
         BuildValue(valueFieldDescriptor, fieldConstraints, true, unwrapped);
         valueEvaluatorEval.AddEvaluator(unwrapped);
     }

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 using Buf.Validate;
+using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
@@ -23,10 +25,11 @@ public class ValueEvaluator : IEvaluator
     public FieldDescriptor FieldDescriptor { get; }
     public List<IEvaluator> Evaluators { get; } = new();
 
-    public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
+    public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor, bool ignoreEmpty)
     {
         FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
+        IgnoreEmpty = ignoreEmpty;
     }
 
 
@@ -34,7 +37,7 @@ public class ValueEvaluator : IEvaluator
     ///     Indicates that the Constraints should not be applied if the field is unset or the default
     ///     (typically zero) value.
     /// </summary>
-    public bool IgnoreEmpty => FieldConstraints.IgnoreEmpty;
+    public bool IgnoreEmpty { get; }
 
     public override string ToString()
     {
@@ -63,7 +66,7 @@ public class ValueEvaluator : IEvaluator
                 return ValidationResult.Empty;
             }
 
-            if (IsZero(value.Value<object?>()))
+            if (!FieldDescriptor.HasPresence && IsDefaultValue(value.Value<object?>()))
             {
                 return ValidationResult.Empty;
             }
@@ -90,7 +93,7 @@ public class ValueEvaluator : IEvaluator
         return new ValidationResult(violations);
     }
 
-    private bool IsZero(object? val)
+    private bool IsDefaultValue(object? val)
     {
         if (val == null)
         {
@@ -99,6 +102,15 @@ public class ValueEvaluator : IEvaluator
 
         try
         {
+            if (val is string stringFieldValue && string.IsNullOrEmpty(stringFieldValue))
+            {
+               return true;
+            }
+            if (val is ByteString byteStringFieldValue && byteStringFieldValue.Length == 0)
+            {
+                return true;
+            }
+            
             if (ValueEquality(val, 0) || ValueEquality(val, 0.0))
             {
                 return true;

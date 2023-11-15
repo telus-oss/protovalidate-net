@@ -33,6 +33,10 @@ public static class Functions
         celEnvironment.RegisterFunction("isHostname", new[] { typeof(string) }, IsHostname);
         celEnvironment.RegisterFunction("isIp", new[] { typeof(string) }, IsIP);
         celEnvironment.RegisterFunction("isIp", new[] { typeof(string), typeof(long) }, IsIP);
+        celEnvironment.RegisterFunction("isIpPrefix", new[] { typeof(string) }, IsIPPrefix);
+        celEnvironment.RegisterFunction("isIpPrefix", new[] { typeof(string), typeof(bool) }, IsIPPrefix);
+        celEnvironment.RegisterFunction("isIpPrefix", new[] { typeof(string), typeof(long) }, IsIPPrefixWithVersion);
+        celEnvironment.RegisterFunction("isIpPrefix", new[] { typeof(string), typeof(long), typeof(bool) }, IsIPPrefixWithVersion);
         celEnvironment.RegisterFunction("isUri", new[] { typeof(string) }, IsUri);
         celEnvironment.RegisterFunction("isUriRef", new[] { typeof(string) }, IsUriRef);
 
@@ -160,6 +164,152 @@ public static class Functions
         }
 
         return false;
+    }
+
+    private static object? IsIPPrefix(object?[] args)
+    {
+        if (args.Length != 1 && args.Length != 2)
+        {
+            throw new CelExpressionParserException("IsIpPrefix function requires 1 or 2 arguments.");
+        }
+
+        bool validNetworkAddress = false;
+        if (args.Length == 2)
+        {
+            if (args[1] is bool boolValidNetworkAddress)
+            {
+                validNetworkAddress = boolValidNetworkAddress;
+            }
+            else
+            {
+                throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+            }
+        }
+
+        var value = args[0];
+        if (value is string valueString)
+        {
+            return IsIPNetworkWithVersion(valueString, null, validNetworkAddress);
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+    }
+
+    private static object? IsIPPrefixWithVersion(object?[] args)
+    {
+        if (args.Length != 2 && args.Length != 3)
+        {
+            throw new CelExpressionParserException("IsIpPrefix function requires 2 or 3 arguments.");
+        }
+
+        int? version;
+        bool validNetworkAddress = false;
+
+        if (args[1] is long versionInt)
+        {
+            if (versionInt == 4)
+            {
+                version = 4;
+            }
+            else if (versionInt == 6)
+            {
+                version = 6;
+            }
+            else
+            {
+                throw new CelExpressionParserException("Invalid IPPrefix version number.");
+            }
+        }
+        else
+        {
+            throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+        }
+
+
+        if (args.Length == 3)
+        {
+            if (args[2] is bool boolValidNetworkAddress)
+            {
+                validNetworkAddress = boolValidNetworkAddress;
+            }
+            else
+            {
+                throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+            }
+        }
+
+
+        var value = args[0];
+        if (value is string valueString)
+        {
+            return IsIPNetworkWithVersion(valueString, version, validNetworkAddress);
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+    }
+
+    private static bool IsIPNetworkWithVersion(string value, long? version, bool checkIfValidNetworkAddress)
+    {
+        string[] parts = value.Split('/');
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        if (!IPAddress.TryParse(parts[0], out var address))
+        {
+            return false;
+        }
+
+        if (address.AddressFamily == AddressFamily.InterNetwork && version.HasValue && version.Value != 4)
+        {
+            return false;
+        }
+
+        if (address.AddressFamily == AddressFamily.InterNetworkV6 && version.HasValue && version.Value != 6)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(parts[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var mask))
+        {
+            return false;
+        }
+
+        if (checkIfValidNetworkAddress)
+        {
+            var addressBytes = address.GetAddressBytes();
+            int maskLengthInBits = addressBytes.Length * 8;
+
+            BitArray maskBitArray = new BitArray(maskLengthInBits);
+            for (int i = 0; i < maskLengthInBits; i++)
+            {
+                //Index calculation is a bit strange, since you have to make your mind about byte order.
+                int index = (int)((maskLengthInBits - i - 1) / 8) * 8 + (i % 8);
+
+                if (i < (maskLengthInBits - mask))
+                {
+                    maskBitArray.Set(index, false);
+                }
+                else
+                {
+                    maskBitArray.Set(index, true);
+                }
+            }
+
+            var addressBitArray = new BitArray(addressBytes);
+
+            for (int i = 0; i < maskLengthInBits; i++)
+            {
+                //if the mask bit is zero and the address bit is non-zero, then we don't have a network.
+                if (!maskBitArray[i] && addressBitArray[i])
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private static object? IsEmail(object?[] args)

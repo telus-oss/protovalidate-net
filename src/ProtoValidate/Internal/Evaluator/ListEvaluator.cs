@@ -26,21 +26,16 @@ public class ListEvaluator : IEvaluator
 
     public ListEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
-        if (fieldConstraints == null)
+        FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
+        FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
+
+        var ignoreEmpty = false;
+        if (fieldConstraints.Repeated?.Items?.IgnoreEmpty != null)
         {
-            throw new ArgumentNullException(nameof(fieldConstraints));
+            ignoreEmpty = fieldConstraints.Repeated.Items.IgnoreEmpty;
         }
 
-        if (fieldDescriptor == null)
-        {
-            throw new ArgumentNullException(nameof(fieldDescriptor));
-        }
-
-        FieldConstraints = fieldConstraints;
-        FieldDescriptor = fieldDescriptor;
-
-
-        ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor);
+        ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor, ignoreEmpty);
     }
 
     public override string ToString()

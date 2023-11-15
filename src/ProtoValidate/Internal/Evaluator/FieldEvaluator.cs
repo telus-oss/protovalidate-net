@@ -29,20 +29,14 @@ public class FieldEvaluator : IEvaluator
     ///     Indicates that the field must have a set value
     /// </summary>
     private bool Required { get; }
+    private bool IgnoreEmpty { get; }
 
-    /// <summary>
-    ///     Indicates that the evaluators should not be applied to this field if the value is unset. Fields
-    ///     that contain messages, are prefixed with `optional`, or are part of a oneof are considered
-    ///     optional. evaluators will still be applied if the field is set as the zero value.
-    /// </summary>
-    private bool Optional { get; }
-
-    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor descriptor, bool required, bool optional)
+    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor descriptor, bool required, bool ignoreEmpty)
     {
         ValueEvaluator = valueEvaluator ?? throw new ArgumentNullException(nameof(valueEvaluator));
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
         Required = required;
-        Optional = optional;
+        IgnoreEmpty = ignoreEmpty;
     }
 
     public override string ToString()
@@ -61,15 +55,17 @@ public class FieldEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
+        var fieldValue = Descriptor.Accessor.GetValue(message); ;
         bool hasField;
+
         if (Descriptor.IsMap)
         {
-            var list = (IDictionary)Descriptor.Accessor.GetValue(message);
+            var list = (IDictionary)fieldValue;
             hasField = list.Count > 0;
         }
         else if (Descriptor.IsRepeated)
         {
-            var list = (IList)Descriptor.Accessor.GetValue(message);
+            var list = (IList)fieldValue;
             hasField = list.Count > 0;
         }
         else if (Descriptor.HasPresence)
@@ -94,34 +90,9 @@ public class FieldEvaluator : IEvaluator
             });
         }
 
-        if ((Optional || ValueEvaluator.IgnoreEmpty) && !hasField)
+        if (IgnoreEmpty && !hasField)
         {
             return ValidationResult.Empty;
-        }
-
-        var fieldValue = Descriptor.Accessor.GetValue(message);
-
-        if (ValueEvaluator.IgnoreEmpty)
-        {
-            if (fieldValue is string stringFieldValue)
-            {
-                //strings are always initialized even if they have no value
-                //so we need to check their length for the IgnoreEmpty flag.
-                if (string.IsNullOrEmpty(stringFieldValue))
-                {
-                    return ValidationResult.Empty;
-                }
-            }
-
-            if (fieldValue is ByteString byteStringFieldValue)
-            {
-                //ByteStrings are always initialized even if they have no value
-                //so we need to check their length for the IgnoreEmpty flag.
-                if (byteStringFieldValue.Length == 0)
-                {
-                    return ValidationResult.Empty;
-                }
-            }
         }
 
         var evalResult = ValueEvaluator.Evaluate(new ObjectValue(Descriptor, fieldValue), failFast);
