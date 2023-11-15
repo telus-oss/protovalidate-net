@@ -74,7 +74,19 @@ public class FieldEvaluator : IEvaluator
         }
         else
         {
-            hasField = true;
+            //this logic is to support the "Required" has field.
+            if (fieldValue is string stringFieldValue && string.IsNullOrEmpty(stringFieldValue))
+            {
+                hasField = false;
+            }
+            else if (fieldValue is ByteString byteStringFieldValue && byteStringFieldValue.Length == 0)
+            {
+                hasField = false;
+            }
+            else
+            {
+                hasField = true;
+            }
         }
 
         if (Required && !hasField)
@@ -94,7 +106,7 @@ public class FieldEvaluator : IEvaluator
         {
             return ValidationResult.Empty;
         }
-
+        
         var evalResult = ValueEvaluator.Evaluate(new ObjectValue(Descriptor, fieldValue), failFast);
         var violations = evalResult.Violations.PrefixErrorPaths("{0}", Descriptor.Name);
 
