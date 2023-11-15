@@ -60,7 +60,7 @@ task pushNuget(){
 }
 
 task pushProtoValidate(type: com.ullink.NuGetPush) {
-    nupkgFile = "${project.buildDir}/Protovalidate.${project.version}.nupkg"
+    nupkgFile = "${project.buildDir}/ProtoValidate-net.${project.version}.nupkg"
     serverUrl = 'Artifactory'
     apiKey = artifactoryNugetApiKey
 }

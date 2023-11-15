@@ -14,6 +14,7 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageTags>ProtoValidate</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
