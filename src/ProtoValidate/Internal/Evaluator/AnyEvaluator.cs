@@ -1,6 +1,19 @@
-﻿using Buf.Validate;
+﻿// Copyright 2023 TELUS
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Buf.Validate;
 using Google.Protobuf.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace ProtoValidate.Internal.Evaluator;
 
@@ -12,7 +25,7 @@ public class AnyEvaluator : IEvaluator
 
     public AnyEvaluator(FieldDescriptor typeUrlDescriptor, IList<string>? inList, IList<string>? notInList)
     {
-      TypeUrlDescriptor = typeUrlDescriptor ?? throw new ArgumentNullException(nameof(typeUrlDescriptor));
+        TypeUrlDescriptor = typeUrlDescriptor ?? throw new ArgumentNullException(nameof(typeUrlDescriptor));
 
         //convert to a dictionary for faster performance than O(n)
         if (inList != null)
@@ -31,7 +44,7 @@ public class AnyEvaluator : IEvaluator
         return $"AnyEvaluator In: {InLookup?.Count ?? 0} NotIn: {NotInLookup?.Count ?? 0}";
     }
 
-    public bool Tautology => (InLookup != null && InLookup.Count == 0) && (NotInLookup != null && NotInLookup.Count == 0);
+    public bool Tautology => InLookup != null && InLookup.Count == 0 && NotInLookup != null && NotInLookup.Count == 0;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {

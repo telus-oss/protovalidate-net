@@ -1,10 +1,22 @@
-﻿using System.Reflection;
+﻿// Copyright 2023 TELUS
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using Buf.Validate;
 using Buf.Validate.Conformance.Harness;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;
-using ProtoValidate.Conformance.Tests;
 using ProtoValidate.Exceptions;
 
 namespace ProtoValidate.Conformance;
@@ -13,31 +25,10 @@ internal class Program
 {
     private static int Main(string[] args)
     {
-        //ConformanceUnitTestParser.GetTestCases();
-
-        // Thread.Sleep(15000);
-
-        // using (var stdin = Console.OpenStandardInput())
-        // {
-        // using (var input = new System.IO.FileStream(@"D:\OpenSourceLibraries\protovalidate-net\.tmp\bin\input.bin", FileMode.Open))
-        // {
-        //     var request = TestConformanceRequest.Parser.ParseFrom(input);
-        //
-        // }
-        // using (var input = new System.IO.FileStream(@"D:\OpenSourceLibraries\protovalidate-net\.tmp\bin\output.bin", FileMode.Open))
-        // {
-        //     var response = TestConformanceResponse.Parser.ParseFrom(input);
-        //
-        // }
-        //
-
-
         using (var stdin = Console.OpenStandardInput())
         {
             using (var stdout = Console.OpenStandardOutput())
             {
-
-               
                 var request = TestConformanceRequest.Parser.ParseFrom(stdin);
 
                 if (request == null)
@@ -73,13 +64,13 @@ internal class Program
         //build a type registry so that we can unpack the ANY types.
         var typeRegistry = TypeRegistry.FromFiles(combinedFileDescriptors);
 
-        var validatorOptions = new ValidatorOptions()
+        var validatorOptions = new ValidatorOptions
         {
             FileDescriptors = combinedFileDescriptors
         };
 
         var validator = new Validator(validatorOptions);
-     
+
         var response = new TestConformanceResponse();
         foreach (var requestKvp in request.Cases)
         {

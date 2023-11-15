@@ -1,4 +1,18 @@
-﻿using Buf.Validate.Conformance.Cases;
+﻿// Copyright 2023 TELUS
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Buf.Validate.Conformance.Cases;
 using NUnit.Framework;
 using ProtoValidate.Exceptions;
 
@@ -16,6 +30,27 @@ public class Int64Tests
     private Validator? Validator { get; set; }
 
     [Test]
+    public void Double_IncorrectType()
+    {
+        // message DoubleIncorrectType {
+        //     double val = 1 [(buf.validate.field).float.gt = 0];
+        // }
+
+
+        var message = new DoubleIncorrectType
+        {
+            Val = 123
+        };
+
+        try
+        {
+            var validationResult = Validator!.Validate(message, false);
+            Assert.Fail("Expected compilation exception.");
+        }
+        catch (CompilationException) { }
+    }
+
+    [Test]
     public void Int64LTE()
     {
         var message = new Int64LTE
@@ -26,6 +61,7 @@ public class Int64Tests
         var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
     }
+
     [Test]
     public void UInt64GTLT()
     {
@@ -46,6 +82,7 @@ public class Int64Tests
         Assert.IsFalse(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
     }
+
     [Test]
     public void UInt64In_In()
     {
@@ -68,6 +105,7 @@ public class Int64Tests
         Assert.IsTrue(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
     }
+
     [Test]
     public void UInt64In_NotIn()
     {
@@ -89,30 +127,5 @@ public class Int64Tests
         var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
         Console.WriteLine(validationResult);
-    }
-
-    [Test]
-    public void Double_IncorrectType()
-    {
-        // message DoubleIncorrectType {
-        //     double val = 1 [(buf.validate.field).float.gt = 0];
-        // }
-
-
-
-        var message = new DoubleIncorrectType
-        {
-            Val = 123
-        };
-
-        try
-        {
-            var validationResult = Validator!.Validate(message, false);
-            Assert.Fail("Expected compilation exception.");
-        }
-        catch (CompilationException)
-        {
-            
-        }
     }
 }

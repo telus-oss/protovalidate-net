@@ -1,4 +1,18 @@
-﻿using System.Collections;
+﻿// Copyright 2023 TELUS
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System.Collections;
 using Buf.Validate;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -86,7 +100,7 @@ public class FieldEvaluator : IEvaluator
         }
 
         var fieldValue = Descriptor.Accessor.GetValue(message);
-        
+
         if (ValueEvaluator.IgnoreEmpty)
         {
             if (fieldValue is string stringFieldValue)
@@ -98,6 +112,7 @@ public class FieldEvaluator : IEvaluator
                     return ValidationResult.Empty;
                 }
             }
+
             if (fieldValue is ByteString byteStringFieldValue)
             {
                 //ByteStrings are always initialized even if they have no value
