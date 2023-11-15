@@ -27,6 +27,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
         <None Remove="proto\**\*.proto" />
         <Protobuf Include="proto\**\*.proto" ProtoRoot="proto" />
     </ItemGroup>
