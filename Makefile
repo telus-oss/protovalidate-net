@@ -9,28 +9,12 @@ MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 COPYRIGHT_YEARS := 2023
 LICENSE_IGNORE :=
-JAVA_VERSION = 20
-JAVAC = javac
-JAVA = java
 GO ?= go
 ARGS ?= --strict_message
-JAVA_COMPILE_OPTIONS = --enable-preview --release $(JAVA_VERSION)
-JAVA_OPTIONS = --enable-preview
-PROTOVALIDATE_VERSION ?= v0.4.2
-JAVA_MAIN_CLASS = build.buf.protovalidate
-JAVA_SOURCES = $(wildcard src/main/java/**/**/**/*.java, src/main/java/**/**/*.java)
-JAVA_CLASSES = $(patsubst src/main/java/%.java, target/classes/%.class, $(JAVA_SOURCES))
+PROTOVALIDATE_VERSION ?= v0.5.4
 
 .PHONY: all
 all: lint generate build docs conformance  ## Run all tests and lint (default)
-
-.PHONY: build
-build:  ## Build the entire project.
-	./gradlew build
-
-.PHONY: docs
-docs:  ## Build javadocs for the project.
-	./gradlew javadoc
 
 .PHONY: checkgenerate
 checkgenerate: generate  ## Checks if `make generate` produces a diff.
@@ -50,38 +34,12 @@ conformance: $(BIN)/protovalidate-conformance  ## Execute conformance tests.
 generate-license: $(BIN)/license-header  ## Generates license headers for all source files.
 	$(BIN)/license-header \
 		--license-type apache \
-		--copyright-holder "Buf Technologies, Inc." \
+		--copyright-holder "TELUS" \
 		--year-range "$(COPYRIGHT_YEARS)" $(LICENSE_IGNORE)
 
 .PHONY: help
 help:  ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-15s %s\n", $$1, $$2}'
-
-.PHONY: generate
-generate: $(BIN)/buf ## generate files
-	$(BIN)/buf generate --template buf.gen.yaml buf.build/bufbuild/protovalidate:$(PROTOVALIDATE_VERSION)
-	$(BIN)/buf generate --template tests/ProtoValidate.Conformance/buf.gen.yaml -o tests/ProtoValidate.Conformance/ buf.build/bufbuild/protovalidate-testing:$(PROTOVALIDATE_VERSION)
-
-.PHONY: lint
-lint: ## Lint code
-	./gradlew spotlessCheck
-
-.PHONY: lintfix
-lintfix:  ## Applies the lint changes.
-	./gradlew spotlessApply
-
-.PHONY: release
-release: ## Upload artifacts to Sonatype Nexus.
-	./gradlew --info publish --stacktrace --no-daemon --no-parallel
-	./gradlew --info closeAndReleaseRepository
-
-.PHONY: releaselocal
-releaselocal: ## Release artifacts to local maven repository.
-	./gradlew --info publishToMavenLocal
-
-.PHONY: test
-test:  ## Run all tests.
-	./gradlew test
 
 $(BIN):
 	@mkdir -p $(BIN)

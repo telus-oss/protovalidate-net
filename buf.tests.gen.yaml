@@ -1,6 +1,0 @@
-version: v1
-managed:
-  enabled: false
-plugins:
-  - plugin: buf.build/protocolbuffers/csharp:v24.2
-    out: tests/ProtoValidate.Tests/proto
