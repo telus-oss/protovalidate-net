@@ -58,10 +58,15 @@ public class ObjectValue : IValue
             var keyDescriptor = FieldDescriptor.MessageType.FindFieldByNumber(1);
             var valueDescriptor = FieldDescriptor.MessageType.FindFieldByNumber(2);
 
-            foreach (DictionaryEntry entry in internalValueDictionary)
+            foreach (var entry in internalValueDictionary)
             {
-                var keyValue = new ObjectValue(keyDescriptor, entry.Key);
-                var valueValue = new ObjectValue(valueDescriptor, entry.Value);
+                if (entry == null)
+                {
+                    continue;
+                }
+                var entryValue = (DictionaryEntry) entry;
+                var keyValue = new ObjectValue(keyDescriptor, entryValue.Key);
+                var valueValue = new ObjectValue(valueDescriptor, entryValue.Value);
 
                 dict.Add(keyValue, valueValue);
             }

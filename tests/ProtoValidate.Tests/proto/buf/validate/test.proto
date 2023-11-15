@@ -1,0 +1,36 @@
+﻿syntax = "proto3";
+
+package buf.validate;
+
+option csharp_namespace = "buf.validate";
+
+import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
+
+message Theater {
+   map<string, int32> movieTicketPrice = 9;
+}
+
+message User {
+  // User's name, must be at least 1 character long.
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message Transaction {
+  google.protobuf.Timestamp purchase_date = 1;
+  google.protobuf.Timestamp delivery_date = 2;
+
+  option (buf.validate.message).cel = {
+    id: "transaction.delivery_date",
+    message: "Delivery date must be after purchase date",
+    expression: "this.delivery_date > this.purchase_date"
+  };
+}
+
+message Product {
+  string price = 1 [(buf.validate.field).cel = {
+    id: "product.price",
+    message: "Price must be positive and include a valid currency symbol ($ or £)",
+    expression: "(this.startsWith('$') || this.startsWith('£')) && double(this.substring(1)) > 0"
+  }];
+}

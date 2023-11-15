@@ -12,9 +12,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Remove="proto\test.proto" />
         <None Remove="Tests\Data\conformance.pbbin" />
         <None Remove="Tests\Data\numbers.json" />
         <None Remove="Tests\Data\numbers.pbbin" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="proto\test.proto">
+        <PackagePath>content/proto</PackagePath>
+        <Pack>true</Pack>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -24,17 +32,14 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
         <PackageReference Include="NUnit" Version="3.14.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.59.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\ProtoValidate\ProtoValidate.csproj" />
     </ItemGroup>
+
     <ItemGroup>
-        <None Remove="proto\**\*.proto" />
-        <Protobuf Include="proto\**\*.proto" ProtoRoot="proto" AdditionalImportDirs="$(SolutionDir)src\ProtoValidate\proto" />
+      <Folder Include="proto\buf\NewFolder\" />
     </ItemGroup>
+
 </Project>
