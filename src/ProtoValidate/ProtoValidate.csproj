@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\..\msbuild\package.props" />
+
+    <PropertyGroup>
+        <TargetFrameworks>net6.0;net7.0;net8.0;netcoreapp3.1</TargetFrameworks>
+        <RootNamespace>ProtoValidate</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <PackageId>ProtoValidate</PackageId>
+        <Authors>TELUS</Authors>
+        <Copyright>Copyright 2023 TELUS</Copyright>
+        <Description>C# implementation of protovalidate.</Description>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageTags>ProtoValidate</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryUrl></RepositoryUrl>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cel" Version="0.1.3" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.25.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.59.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Remove="proto\**\*.proto" />
+        <Content Include="proto\**\*.proto" Pack="true" PackagePath="content/proto"/>
+        <Protobuf Include="proto\**\*.proto" ProtoRoot="proto" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="build\*.targets" Pack="true" PackagePath="build" />
+    </ItemGroup>
+
+</Project>
