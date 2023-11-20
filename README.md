@@ -149,6 +149,7 @@ message Transaction {
 - [ProtoValidate](https://github.com/bufbuild/protovalidate) core repository
 - [Buf](https://buf.build)
 - [CEL Spec](https://github.com/google/cel-spec)
+- [CEL C# implementation](https://github.com/telus-oss/cel-net)
 
 ## Legal
 
