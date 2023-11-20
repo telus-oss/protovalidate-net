@@ -332,7 +332,7 @@ public static class Functions
                 return false;
             }
 
-            var parts = valueString.Split("@");
+            var parts = valueString.Split('@');
             if (parts.Length != 2)
             {
                 return false;
@@ -383,7 +383,7 @@ public static class Functions
             lowerCaseHostname = lowerCaseHostname.Substring(0, lowerCaseHostname.Length - 1);
         }
 
-        var split = lowerCaseHostname.Split(".");
+        var split = lowerCaseHostname.Split('.');
 
 
         foreach (var part in split)
