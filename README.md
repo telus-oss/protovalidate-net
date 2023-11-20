@@ -25,7 +25,7 @@ Other `protovalidate` runtime implementations include:
 To install the package, use pip:
 
 ```shell
-nuget install protovalidate-net
+nuget install ProtoValidate
 ```
 ## Usage
 

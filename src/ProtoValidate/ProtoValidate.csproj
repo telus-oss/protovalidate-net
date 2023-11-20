@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-        <PackageId>ProtoValidate-net</PackageId>
+        <PackageId>ProtoValidate</PackageId>
         <Authors>TELUS</Authors>
         <Copyright>Copyright 2023 TELUS</Copyright>
         <Description>C# implementation of protovalidate.</Description>
