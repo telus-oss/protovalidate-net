@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cel" Version="0.1.0" />
+        <PackageReference Include="Cel" Version="0.1.2" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
         <PackageReference Include="Google.Protobuf" Version="3.25.0" />
         <PackageReference Include="Grpc.Tools" Version="2.59.0">
