@@ -22,7 +22,7 @@ Other `protovalidate` runtime implementations include:
 
 ## Installation
 
-To install the package, use pip:
+To install the package, use nuget:
 
 ```shell
 nuget install ProtoValidate
@@ -146,7 +146,7 @@ message Transaction {
 
 ### Ecosystem
 
-- [ProtoValidate](https://github.com/bufbuild/protovalidate) core repository
+- [`protovalidate`](https://github.com/bufbuild/protovalidate) core repository
 - [Buf](https://buf.build)
 - [CEL Spec](https://github.com/google/cel-spec)
 - [CEL C# implementation](https://github.com/telus-oss/cel-net)
