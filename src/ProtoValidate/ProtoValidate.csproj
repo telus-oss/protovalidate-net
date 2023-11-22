@@ -17,7 +17,11 @@
         <RepositoryUrl>https://github.com/telus-oss/protovalidate-net</RepositoryUrl>
         <PackageProjectUrl>https://github.com/telus-oss/protovalidate-net</PackageProjectUrl>
         <IsPackable>true</IsPackable>
-        <Version>0.1.1</Version>
+        <Version>0.1.2</Version>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <DebugType>portable</DebugType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,7 +32,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
