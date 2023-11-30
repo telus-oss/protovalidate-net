@@ -1,4 +1,4 @@
-name: Build ProtoValidate-Net and Run Unit Tests
+name: Build and Run Unit Tests
 
 on: [push]
 
