@@ -73,7 +73,7 @@ public class ConformanceUnitTests
         {
             return new TestResult
             {
-                RuntimeError = !string.IsNullOrWhiteSpace(e.SourceExpression?.Message) ? e.SourceExpression.Message : e.Message
+                RuntimeError = !string.IsNullOrWhiteSpace(e.SourceExpression?.Message) ? e.SourceExpression?.Message : e.Message
             };
         }
         catch (Exception e)
