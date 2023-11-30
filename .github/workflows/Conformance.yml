@@ -38,7 +38,7 @@ jobs:
         run: dotnet publish -p:Configuration=Release --framework net8.0 --os linux      
 
       - name: Run Conformance (Linux)
-        if: runner.os == 'Windows'
+        if: runner.os == 'linux'
         run: make protovalidate-conformance-linux
 
       - name: Run Conformance (Windows)
