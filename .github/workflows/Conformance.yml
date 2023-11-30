@@ -27,11 +27,15 @@ jobs:
 
       - name: Build Windows Conformance Tool (.Net Framework 4.8.1)
         if: runner.os == 'windows'
-        run: dotnet publish -p:Configuration=Release --framework net481 --os windows
+        run: dotnet publish -p:Configuration=Release --framework net481 --os win
 
       - name: Build Windows Conformance Tool (.Net 8.0)
         if: runner.os == 'windows'
-        run: dotnet publish -p:Configuration=Release --framework net8.0 --os windows
+        run: dotnet publish -p:Configuration=Release --framework net8.0 --os win
+      
+      - name: Run Conformance (Windows)
+        if: runner.os == 'windows'
+        run: make conformance-windows       
 
       - name: Build Linux Conformance Tool
         if: runner.os == 'linux'
@@ -39,8 +43,6 @@ jobs:
 
       - name: Run Conformance (Linux)
         if: runner.os == 'linux'
-        run: make protovalidate-conformance-linux
+        run: make conformance-linux
 
-      - name: Run Conformance (Windows)
-        if: runner.os == 'windows'
-        run: make protovalidate-conformance-windows        
+ 
