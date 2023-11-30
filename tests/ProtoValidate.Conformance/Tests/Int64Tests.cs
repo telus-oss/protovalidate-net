@@ -80,7 +80,6 @@ public class Int64Tests
 
         var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
-        Console.WriteLine(validationResult);
     }
 
     [Test]
@@ -103,7 +102,6 @@ public class Int64Tests
 
         var validationResult = Validator!.Validate(message, false);
         Assert.IsTrue(validationResult.IsSuccess);
-        Console.WriteLine(validationResult);
     }
 
     [Test]
@@ -126,6 +124,5 @@ public class Int64Tests
 
         var validationResult = Validator!.Validate(message, false);
         Assert.IsFalse(validationResult.IsSuccess);
-        Console.WriteLine(validationResult);
     }
 }
