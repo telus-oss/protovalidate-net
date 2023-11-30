@@ -1,4 +1,4 @@
-name: dotnet build
+name: Build ProtoValidate-Net and Run Unit Tests
 
 on: [push]
 
