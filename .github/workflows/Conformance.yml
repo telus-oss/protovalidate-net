@@ -1,0 +1,46 @@
+name: Run Conformance Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        dotnet-version: [ '8.0.x' ]
+        os: [ubuntu-latest, windows-latest]        
+
+    steps:
+      - uses: actions/checkout@v4      
+      - name: Setup dotnet ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}      
+      - name: Display dotnet version
+        run: dotnet --version
+
+      - name: Install dependencies
+        run: dotnet restore -p:Configuration=Release
+
+      - name: Build ProtoValidate
+        run: dotnet build -p:Configuration=Release
+
+      - name: Build Windows Conformance Tool (.Net Framework 4.8.1)
+        if: runner.os == 'windows'
+        run: dotnet publish -p:Configuration=Release --framework net481 --os windows
+
+      - name: Build Windows Conformance Tool (.Net 8.0)
+        if: runner.os == 'windows'
+        run: dotnet publish -p:Configuration=Release --framework net8.0 --os windows
+
+      - name: Build Linux Conformance Tool
+        if: runner.os == 'linux'
+        run: dotnet publish -p:Configuration=Release --framework net8.0 --os linux      
+
+      - name: Run Conformance (Linux)
+        if: runner.os == 'Windows'
+        run: make protovalidate-conformance-linux
+
+      - name: Run Conformance (Windows)
+        if: runner.os == 'windows'
+        run: make protovalidate-conformance-windows        

@@ -26,9 +26,12 @@ clean:  ## Delete intermediate build artifacts
 	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
 	git clean -Xdf
 
-.PHONY: conformance
-conformance: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Debug/net8.0/win-x64/ProtoValidate.Conformance.exe
+.PHONY: conformance-windows
+conformance-windows: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+conformance-linux: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/linux-x64/publish/ProtoValidate.Conformance
 
 .PHONY: conformance-test-dump
 conformance-test-dump: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
