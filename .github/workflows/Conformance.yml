@@ -1,8 +1,7 @@
 name: Run Conformance Tests
 
 on:
-  push:
-    branches: [main]
+  push:    
   pull_request:
     branches: [main]
   workflow_dispatch: {} # support manual runs
@@ -28,7 +27,7 @@ jobs:
         run: dotnet --version
 
       - name: Build ProtoValidate
-        run: dotnet msbuild -t:Restore;Build;PublishAll -p:Configuration=Release
+        run: dotnet msbuild "-t:Restore;Build;PublishAll" "-p:Configuration=Release"
 
       - name: Run Conformance (Windows .Net 4.8)
         if: runner.os == 'windows'
