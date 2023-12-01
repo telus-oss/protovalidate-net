@@ -5,7 +5,6 @@ else
     SHELL := bash
 	.DELETE_ON_ERROR:
 	.SHELLFLAGS := -eu -o pipefail -c
-	.DEFAULT_GOAL := all
 endif
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
