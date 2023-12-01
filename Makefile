@@ -1,8 +1,12 @@
 # See https://tech.davis-hansson.com/p/make/
-#SHELL := bash
-#.DELETE_ON_ERROR:
-#.SHELLFLAGS := -eu -o pipefail -c
-#.DEFAULT_GOAL := all
+ifeq ($(OS),Windows_NT)
+    SHELL := cmd
+else
+    SHELL := bash
+	.DELETE_ON_ERROR:
+	.SHELLFLAGS := -eu -o pipefail -c
+	.DEFAULT_GOAL := all
+endif
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
