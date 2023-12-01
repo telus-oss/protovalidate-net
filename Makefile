@@ -10,7 +10,7 @@ COPYRIGHT_YEARS := 2023
 LICENSE_IGNORE :=
 BIN = tmp
 GO ?= go
-ARGS ?= --strict_message --timeout 10
+ARGS ?= --strict_message --timeout 10s
 PROTOVALIDATE_VERSION ?= v0.5.4
 
 
