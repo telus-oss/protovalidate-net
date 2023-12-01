@@ -42,8 +42,8 @@ jobs:
       - name: Upload Nuget Packages to Github Action
         uses: actions/upload-artifact@v3
         with:
-          name: nuget-package
+          name: nuget-packages
           path: |
             build/*.nupkg
             build/*.snupkg
-        #if: github.ref == 'refs/heads/main'          
+        if: github.ref == 'refs/heads/main'          
