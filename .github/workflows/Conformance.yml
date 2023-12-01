@@ -25,7 +25,7 @@ jobs:
       - name: Build ProtoValidate
         run: dotnet build -p:Configuration=Release
 
-      - name: Build Windows Conformance Tool (.Net Framework 4.8.1)
+      - name: Build Windows Conformance Tool (.Net Framework 4.8)
         if: runner.os == 'windows'
         run: dotnet publish -p:Configuration=Release --framework net48 --os win
 
