@@ -1,11 +1,8 @@
 # See https://tech.davis-hansson.com/p/make/
-ifeq ($(OS),Windows_NT)
-    SHELL=cmd
-else
-    SHELL=bash
-	.DELETE_ON_ERROR:
-	.SHELLFLAGS := -eu -o pipefail -c
-endif
+SHELL := bash
+.DELETE_ON_ERROR:
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := all
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
@@ -15,6 +12,7 @@ BIN = tmp
 GO ?= go
 ARGS ?= --strict_message
 PROTOVALIDATE_VERSION ?= v0.5.4
+
 
 .PHONY: conformance-windows-net48
 conformance-windows-net48: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
@@ -31,6 +29,23 @@ conformance-windows-net70: $(BIN)/protovalidate-conformance-windows  ## Execute 
 .PHONY: conformance-windows-net80
 conformance-windows-net80: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
 	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+
+.PHONY: conformance-mingw-net48
+conformance-mingw-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+.PHONY: conformance-mingw-net60
+conformance-mingw-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+.PHONY: conformance-mingw-net70
+conformance-mingw-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+.PHONY: conformance-mingw-net80
+conformance-mingw-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-linux-net60
 conformance-linux-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
