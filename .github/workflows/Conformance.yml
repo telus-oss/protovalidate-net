@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Windows Conformance Tool (.Net Framework 4.8.1)
         if: runner.os == 'windows'
-        run: dotnet publish -p:Configuration=Release --framework net481 --os win
+        run: dotnet publish -p:Configuration=Release --framework net48 --os win
 
       - name: Build Windows Conformance Tool (.Net 8.0)
         if: runner.os == 'windows'
