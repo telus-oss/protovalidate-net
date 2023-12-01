@@ -6,43 +6,28 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
-BIN := .tmp/bin
 COPYRIGHT_YEARS := 2023
 LICENSE_IGNORE :=
+BIN = tmp
 GO ?= go
 ARGS ?= --strict_message
 PROTOVALIDATE_VERSION ?= v0.5.4
 
-.PHONY: all
-all: lint generate build docs conformance  ## Run all tests and lint (default)
-
-.PHONY: checkgenerate
-checkgenerate: generate  ## Checks if `make generate` produces a diff.
-	@# Used in CI to verify that `make generate` doesn't produce a diff.
-	test -z "$$(git status --porcelain | tee /dev/stderr)"
-
-.PHONY: clean
-clean:  ## Delete intermediate build artifacts
-	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
-	git clean -Xdf
-
 .PHONY: conformance-windows-net48
-conformance-windows-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
-
+conformance-windows-net48: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
+	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-windows-net60
-conformance-windows-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
-
+conformance-windows-net60: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
+	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-windows-net70
-conformance-windows-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
+conformance-windows-net70: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
+	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-windows-net80
-conformance-windows-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
+conformance-windows-net80: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
+	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-linux-net60
 conformance-linux-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
@@ -59,7 +44,7 @@ conformance-linux-net80: $(BIN)/protovalidate-conformance  ## Execute conformanc
 
 .PHONY: conformance-test-dump
 conformance-test-dump: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) --dump --proto > ./tests/ProtoValidate.Conformance/Tests/Data/conformance.pbbin
+	$(BIN)/protovalidate-conformance $(ARGS) --dump --proto > ./tests/ProtoValidate.Conformance/Tests/Data/conformance.pb$(BIN)
 
 
 .PHONY: generate-license
@@ -87,4 +72,7 @@ $(BIN)/license-header: $(BIN) Makefile
 $(BIN)/protovalidate-conformance: $(BIN) Makefile
 	GOBIN=$(abspath $(BIN)) $(GO) install \
 		github.com/bufbuild/protovalidate/tools/protovalidate-conformance@$(PROTOVALIDATE_VERSION)
+
+$(BIN)/protovalidate-conformance-windows: Makefile
+	SET "GOBIN=$(abspath $(BIN))" && $(GO) install github.com/bufbuild/protovalidate/tools/protovalidate-conformance@$(PROTOVALIDATE_VERSION)
 
