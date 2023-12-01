@@ -21,8 +21,6 @@ public class ConformanceUnitTestParser
 {
     public static(string Suite, string Name)[] ExcludedTests =
     {
-        // this test is excluded because .Net handles composite emoji better, and I think the expected result is not correct
-        ("standard_constraints/string", "len/invalid/emoji/composite"),
         // these tests are excluded because the test cases are exported from buf with a specific date time at time of export
         // and they fail after a time, so we can exclude them from our regular unit tests
         // but when we validate for conformance, it will test them
