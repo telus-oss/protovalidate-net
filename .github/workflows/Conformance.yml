@@ -31,17 +31,17 @@ jobs:
       - name: Build ProtoValidate
         run: dotnet msbuild "-t:Restore;Build;PublishAll" "-p:Configuration=Release"
 
-      - name: Run Conformance (Windows .Net 6.0)
+      - name: Run Conformance (Windows .Net 8.0)
         if: runner.os == 'windows'
-        run: make conformance-mingw-net60
+        run: make conformance-mingw-net80
 
       - name: Run Conformance (Windows .Net 7.0)
         if: runner.os == 'windows'
         run: make conformance-mingw-net70
 
-      - name: Run Conformance (Windows .Net 8.0)
+      - name: Run Conformance (Windows .Net 6.0)
         if: runner.os == 'windows'
-        run: make conformance-mingw-net80
+        run: make conformance-mingw-net60
 
       - name: Run Conformance (Windows .Net 4.8)
         if: runner.os == 'windows'
