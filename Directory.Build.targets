@@ -1,0 +1,35 @@
+<Project>
+  <Target Name="PublishProjectIfFrameworkSet"
+          DependsOnTargets="Publish"
+          Condition=" '$(TargetFramework)' != '' " />
+
+	<!-- One TargetFramework, and multiple RuntimeIdentifiers -->
+  <Target Name="PublishProjectForAllRIDsIfTargetFrameworkSet" Condition=" '$(TargetFrameworks)' == '' and  '$(TargetFramework)' != '' and '$(RuntimeIdentifiers)' != '' and '$(RuntimeIdentifier)' == ''  ">
+    <ItemGroup>
+      <_PublishRuntimeIdentifier Include="$(RuntimeIdentifiers)" />
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="PublishAll" Properties="TargetFramework=$(TargetFramework);RuntimeIdentifier=%(_PublishRuntimeIdentifier.Identity)" />
+  </Target>
+  
+  <!-- Multiple TargetFrameworks, and one RuntimeIdentifier -->
+  <Target Name="PublishProjectForAllFrameworksIfFrameworkUnset" Condition=" '$(TargetFrameworks)' != '' and '$(TargetFramework)' == '' and '$(RuntimeIdentifiers)' == '' and '$(RuntimeIdentifier)' != ''  ">
+    <ItemGroup>
+      <_PublishFramework Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="PublishAll" Properties="TargetFramework=%(_PublishFramework.Identity)" />
+  </Target>
+
+<!-- Multiple TargetFrameworks, and multiple RuntimeIdentifiers -->
+  <Target Name="PublishProjectForAllCombinationsOfRIDsAndTargetFrameworks" Condition="'$(TargetFrameworks)' != '' and '$(TargetFramework)' == '' and '$(RuntimeIdentifiers)' != '' and '$(RuntimeIdentifier)' == ''  ">
+    <ItemGroup>
+      <_PublishRuntimeIdentifier Include="$(RuntimeIdentifiers)" />
+      <_PublishFramework Include="$(TargetFrameworks)">
+          <RuntimeIdentifier>%(_PublishRuntimeIdentifier.Identity)</RuntimeIdentifier>
+      </_PublishFramework>
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFile)" Targets="PublishAll" Properties="TargetFramework=%(_PublishFramework.Identity);RuntimeIdentifier=%(_PublishFramework.RuntimeIdentifier)" />
+  </Target>
+  
+  <Target Name="PublishAll"
+          DependsOnTargets="PublishProjectIfFrameworkSet;PublishProjectForAllRIDsIfTargetFrameworkSet;PublishProjectForAllFrameworksIfFrameworkUnset;PublishProjectForAllCombinationsOfRIDsAndTargetFrameworks" />
+</Project>

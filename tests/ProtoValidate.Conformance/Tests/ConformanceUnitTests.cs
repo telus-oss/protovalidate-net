@@ -73,7 +73,7 @@ public class ConformanceUnitTests
         {
             return new TestResult
             {
-                RuntimeError = !string.IsNullOrWhiteSpace(e.SourceExpression?.Message) ? e.SourceExpression.Message : e.Message
+                RuntimeError = !string.IsNullOrWhiteSpace(e.SourceExpression?.Message) ? e.SourceExpression?.Message : e.Message
             };
         }
         catch (Exception e)
@@ -102,39 +102,13 @@ public class ConformanceUnitTests
         //test for unexpected errors
         Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), string.IsNullOrWhiteSpace(testResults.UnexpectedError));
 
-
-        // //test for compilationErrors
-        // if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError) || !string.IsNullOrWhiteSpace(testResults.CompilationError))
-        // {
-        //     if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError))
-        //     {
-        //         Assert.Pass();
-        //     }
-        //     else
-        //     {
-        //         Assert.Fail(testResults.CompilationError);
-        //     }
-        //     return;
-        // }
-        // if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError) || !string.IsNullOrWhiteSpace(testResults.UnexpectedError))
-        // {
-        //     if (!string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError))
-        //     {
-        //         Assert.Pass();
-        //     }
-        //     else
-        //     {
-        //         Assert.Fail(testResults.UnexpectedError);
-        //     }
-        //     return;
-        // }
-
         if (testCase.ExpectedResult == null)
         {
             Assert.Fail("We need expected result to have a value.");
             return;
         }
 
+#if DEBUG
         if (!testCase.ExpectedResult.Success || !testResults.Success)
         {
             if (testCase.ExpectedResult.ValidationError != null
@@ -198,7 +172,7 @@ public class ConformanceUnitTests
                 }
             }
         }
-
+#endif
 
         if (testCase!.ExpectedResult!.Success)
         {

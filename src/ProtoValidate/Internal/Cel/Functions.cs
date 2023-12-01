@@ -421,7 +421,23 @@ public static class Functions
         }
 
 
-        return Uri.TryCreate(valueString, UriKind.Absolute, out var uri);
+        var isUri =  Uri.TryCreate(valueString, UriKind.Absolute, out var uri);
+        if (!isUri)
+        {
+            return false;
+        }
+
+        // this URI fragment "/foo/bar?baz=quux" returns false when we try to create on windows, but returns true on linux/macos with the prefix "file://"
+        // so it looks like "file:///foo/bar?baz=quux" when we parse on linux and call uri.ToString();
+        // since this isn't a full URI, we need this hack here to return a failure.
+        // but we don't want full uri's that legitimately start with "file://" to get caught up in this exception.
+
+        if (uri != null && uri.ToString().StartsWith("file://", StringComparison.Ordinal) && !valueString.StartsWith("file://", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static object? IsUriRef(object?[] args)

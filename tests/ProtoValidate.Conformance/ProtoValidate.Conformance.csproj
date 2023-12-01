@@ -1,21 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net8.0;net7.0;net6.0;net48</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <StartupObject>ProtoValidate.Conformance.Program</StartupObject>
         <OutputType>Exe</OutputType>
-        <PlatformTarget>x64</PlatformTarget>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <SelfContained>false</SelfContained>
         <IsPackable>false</IsPackable>
+        <LangVersion>11.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
         <None Remove="Tests\Data\conformance.pbbin" />
-        <None Remove="Tests\Data\numbers.json" />
-        <None Remove="Tests\Data\numbers.pbbin" />
     </ItemGroup>
 
     <ItemGroup>
