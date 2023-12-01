@@ -25,6 +25,8 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}      
       - name: Display dotnet version
         run: dotnet --version
+      - name: Display Make version
+        run: make --version        
 
       - name: Build ProtoValidate
         run: dotnet msbuild "-t:Restore;Build;PublishAll" "-p:Configuration=Release"

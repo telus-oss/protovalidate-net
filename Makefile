@@ -1,8 +1,8 @@
 # See https://tech.davis-hansson.com/p/make/
 ifeq ($(OS),Windows_NT)
-    SHELL := cmd
+    SHELL=cmd
 else
-    SHELL := bash
+    SHELL=bash
 	.DELETE_ON_ERROR:
 	.SHELLFLAGS := -eu -o pipefail -c
 endif
