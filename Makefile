@@ -33,7 +33,7 @@ conformance-windows-net80: $(BIN)/protovalidate-conformance-windows  ## Execute 
 
 .PHONY: conformance-mingw-net48
 conformance-mingw-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-mingw-net60
 conformance-mingw-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
