@@ -35,13 +35,13 @@ jobs:
       #   if: runner.os == 'windows'
       #   run: make conformance-mingw-net48      
 
-      # - name: Run Conformance (Windows .Net 6.0)
-      #   if: runner.os == 'windows'
-      #   run: make conformance-mingw-net60
+      - name: Run Conformance (Windows .Net 6.0)
+        if: runner.os == 'windows'
+        run: make conformance-mingw-net60
 
-      # - name: Run Conformance (Windows .Net 7.0)
-      #   if: runner.os == 'windows'
-      #   run: make conformance-mingw-net70
+      - name: Run Conformance (Windows .Net 7.0)
+        if: runner.os == 'windows'
+        run: make conformance-mingw-net70
 
       - name: Run Conformance (Windows .Net 8.0)
         if: runner.os == 'windows'
