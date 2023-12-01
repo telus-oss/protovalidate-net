@@ -26,12 +26,36 @@ clean:  ## Delete intermediate build artifacts
 	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
 	git clean -Xdf
 
-.PHONY: conformance-windows
-conformance-windows: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+.PHONY: conformance-windows-net48
+conformance-windows-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
+
+
+.PHONY: conformance-windows-net60
+conformance-windows-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+
+.PHONY: conformance-windows-net70
+conformance-windows-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
+
+.PHONY: conformance-windows-net80
+conformance-windows-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
 	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
 
-conformance-linux: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+.PHONY: conformance-linux-net60
+conformance-linux-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/linux-x64/publish/ProtoValidate.Conformance
+
+.PHONY: conformance-linux-net70
+conformance-linux-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
+	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/linux-x64/publish/ProtoValidate.Conformance
+
+.PHONY: conformance-linux-net80
+conformance-linux-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
 	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/linux-x64/publish/ProtoValidate.Conformance
+
 
 .PHONY: conformance-test-dump
 conformance-test-dump: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	

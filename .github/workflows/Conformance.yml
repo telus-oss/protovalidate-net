@@ -27,30 +27,33 @@ jobs:
       - name: Display dotnet version
         run: dotnet --version
 
-      - name: Install dependencies
-        run: dotnet restore -p:Configuration=Release
-
       - name: Build ProtoValidate
-        run: dotnet build -p:Configuration=Release
+        run: dotnet msbuild -t:Restore;Build;PublishAll -p:Configuration=Release
 
-      - name: Build Windows Conformance Tool (.Net Framework 4.8)
+      - name: Run Conformance (Windows .Net 4.8)
         if: runner.os == 'windows'
-        run: dotnet publish -p:Configuration=Release --framework net48 --os win
+        run: make conformance-windows-net48      
 
-      - name: Build Windows Conformance Tool (.Net 8.0)
+      - name: Run Conformance (Windows .Net 6.0)
         if: runner.os == 'windows'
-        run: dotnet publish -p:Configuration=Release --framework net8.0 --os win
-      
-      - name: Run Conformance (Windows)
-        if: runner.os == 'windows'
-        run: make conformance-windows       
+        run: make conformance-windows-net60
 
-      - name: Build Linux Conformance Tool
+      - name: Run Conformance (Windows .Net 7.0)
+        if: runner.os == 'windows'
+        run: make conformance-windows-net70
+
+      - name: Run Conformance (Windows .Net 8.0)
+        if: runner.os == 'windows'
+        run: make conformance-windows-net80 
+
+      - name: Run Conformance (Linux .Net 6.0)
         if: runner.os == 'linux'
-        run: dotnet publish -p:Configuration=Release --framework net8.0 --os linux      
+        run: make conformance-linux-net60
 
-      - name: Run Conformance (Linux)
+      - name: Run Conformance (Linux .Net 7.0)
         if: runner.os == 'linux'
-        run: make conformance-linux
+        run: make conformance-linux-net70
 
- 
+      - name: Run Conformance (Linux .Net 8.0)
+        if: runner.os == 'linux'
+        run: make conformance-linux-net80
