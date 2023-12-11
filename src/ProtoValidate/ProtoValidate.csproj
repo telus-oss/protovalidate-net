@@ -27,7 +27,7 @@
 
     <ItemGroup>
         <PackageReference Include="Cel" Version="0.1.4" />
-        <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.0" />
         <PackageReference Include="Google.Protobuf" Version="3.25.1" />
         <PackageReference Include="Grpc.Tools" Version="2.59.0">
             <PrivateAssets>all</PrivateAssets>
