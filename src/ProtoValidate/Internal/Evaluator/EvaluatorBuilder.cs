@@ -144,6 +144,9 @@ public class EvaluatorBuilder
         foreach (var oneofDesc in oneofs)
         {
             var oneofConstraints = ConstraintResolver.ResolveOneofConstraints(oneofDesc);
+
+            if (oneofConstraints is null) continue;
+
             var oneofEvaluatorEval = new OneofEvaluator(oneofDesc, oneofConstraints.Required);
             msgEval.AddEvaluator(oneofEvaluatorEval);
         }
@@ -155,6 +158,9 @@ public class EvaluatorBuilder
         foreach (var fieldDescriptor in fieldDescriptors)
         {
             var fieldConstraints = ConstraintResolver.ResolveFieldConstraints(fieldDescriptor);
+
+            if (fieldConstraints is null) continue;
+
             var fieldEvaluator = BuildField(fieldDescriptor, fieldConstraints);
             messageEvaluator.AddEvaluator(fieldEvaluator);
         }
