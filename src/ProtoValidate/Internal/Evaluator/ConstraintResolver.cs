@@ -61,14 +61,9 @@ public class ConstraintResolver
     public OneofConstraints ResolveOneofConstraints(OneofDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
-        if (options == null)
+        if (options == null || !options.HasExtension(ValidateExtensions.Oneof))
         {
-            return new OneofConstraints();
-        }
-
-        if (!options.HasExtension(ValidateExtensions.Oneof))
-        {
-            return new OneofConstraints();
+            return null;
         }
 
         return options.GetExtension(ValidateExtensions.Oneof);
@@ -79,7 +74,7 @@ public class ConstraintResolver
         var options = descriptor.GetOptions();
         if (options == null || !options.HasExtension(ValidateExtensions.Field))
         {
-            return new FieldConstraints();
+            return null;
         }
 
         return options.GetExtension(ValidateExtensions.Field);
