@@ -58,30 +58,32 @@ public class ConstraintResolver
         return messageConstraints;
     }
 
-    public OneofConstraints ResolveOneofConstraints(OneofDescriptor descriptor)
+    public OneofConstraints? ResolveOneofConstraints(OneofDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
-        if (options == null)
+        if (options == null || !options.HasExtension(ValidateExtensions.Oneof))
         {
-            return new OneofConstraints();
-        }
-
-        if (!options.HasExtension(ValidateExtensions.Oneof))
-        {
-            return new OneofConstraints();
+            return null;
         }
 
         return options.GetExtension(ValidateExtensions.Oneof);
     }
 
-    public FieldConstraints ResolveFieldConstraints(FieldDescriptor descriptor)
+    public FieldConstraints? ResolveFieldConstraints(FieldDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
-        if (options == null || !options.HasExtension(ValidateExtensions.Field))
+
+        bool hasNoOptionsOrExtension = (options == null || !options.HasExtension(ValidateExtensions.Field));
+
+        if (descriptor.FieldType == FieldType.Message && hasNoOptionsOrExtension)
         {
             return new FieldConstraints();
         }
+        else if (descriptor.FieldType != FieldType.Message && hasNoOptionsOrExtension)
+        {
+            return null;
+        }
 
-        return options.GetExtension(ValidateExtensions.Field);
+        return options?.GetExtension(ValidateExtensions.Field);
     }
 }
