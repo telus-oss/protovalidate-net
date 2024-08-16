@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package buf.validate;
+
+import "buf/validate/validate.proto";
+
+option csharp_namespace = "buf.validate";
+
+message NestedMessageLevel1 {
+  string value = 1 [(buf.validate.field).string.len = 10];
+  NestedMessageLevel2 nest = 2;
+}
+
+message NestedMessageLevel2 {
+  string value = 1 [(buf.validate.field).string.len = 10];
+  repeated NestedMessageLevel3 nest3_list = 2;
+}
+
+message NestedMessageLevel3 {
+  string value = 1 [(buf.validate.field).string.len = 10];
+  NestedMessageLevel2 nest2 = 2;
+}

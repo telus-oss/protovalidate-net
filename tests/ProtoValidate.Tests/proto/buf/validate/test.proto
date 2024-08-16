@@ -1,14 +1,14 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 
 package buf.validate;
 
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
 option csharp_namespace = "buf.validate";
 
-import "google/protobuf/timestamp.proto";
-import "buf/validate/validate.proto";
-
 message Theater {
-   map<string, int32> movieTicketPrice = 9;
+  map<string, int32> movieTicketPrice = 9;
 }
 
 message User {
