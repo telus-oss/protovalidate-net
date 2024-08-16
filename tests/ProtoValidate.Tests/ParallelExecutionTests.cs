@@ -23,7 +23,7 @@ namespace ProtoValidate.Tests;
 public class ParallelExecutionTests
 {
     [Test]
-    public void TestParallelValidation()
+    public void TestParallelValidation_Transaction()
     {
         //run this test a lot of times to ensure we have no race conditions
         for (var i = 0; i < 100; i++)
@@ -41,6 +41,25 @@ public class ParallelExecutionTests
 
             //validate simultaneously to trigger a race condition in this validator.
             Parallel.For(0, 20, c => { validator.Validate(t, false); });
+        }
+    }
+
+    [Test]
+    public void TestParallelValidation_NestedType()
+    {
+        //run this test a lot of times to ensure we have no race conditions
+        for (var i = 0; i < 100; i++)
+        {
+            var validatorOptions = new ValidatorOptions();
+            validatorOptions.PreLoadDescriptors = false;
+            validatorOptions.FileDescriptors = new[] { NestReflection.Descriptor };
+
+            var validator = new Validator();
+            
+            var m = new NestedMessageLevel1();
+            
+            //validate simultaneously to trigger a race condition in this validator.
+            Parallel.For(0, 20, c => { validator.Validate(m, false); });
         }
     }
 }
