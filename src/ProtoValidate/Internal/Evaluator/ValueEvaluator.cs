@@ -59,10 +59,8 @@ public class ValueEvaluator : IEvaluator
     {
         if (Ignore == Ignore.IfUnpopulated || Ignore == Ignore.IfDefaultValue)
         {
-            if (value == null)
-            {
-                return ValidationResult.Empty;
-            }
+            return ValidationResult.Empty;
+        }
 
             if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value.Value<object?>()))
             {
@@ -81,6 +79,7 @@ public class ValueEvaluator : IEvaluator
                 return ValidationResult.Empty;
             }
         }
+
 
         var violations = new List<Violation>();
         foreach (var evaluator in Evaluators)

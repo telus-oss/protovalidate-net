@@ -1,4 +1,4 @@
-﻿using buf.validate;
+﻿using Buf.Validate;
 using NUnit.Framework;
 
 namespace ProtoValidate.Tests;

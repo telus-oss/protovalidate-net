@@ -14,7 +14,8 @@
 
 using System.Collections;
 using System.Collections.Concurrent;
-using Buf.Validate.Priv;
+using System.Reflection;
+using Buf.Validate;
 using Cel;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -26,16 +27,20 @@ namespace ProtoValidate.Internal.Constraints;
 
 public class ConstraintCache
 {
-    private class CompiledExpression
+    public ConstraintCache(CelEnvironment celEnvironment, IList<FieldDescriptor> extensions)
     {
-        public CompiledExpression(Expression source, CelProgramDelegate celProgramDelegate)
+        if (celEnvironment == null)
         {
-            Source = source;
-            CelProgramDelegate = celProgramDelegate;
+            throw new ArgumentNullException(nameof(celEnvironment));
         }
 
-        public Expression Source { get; }
-        public CelProgramDelegate CelProgramDelegate { get; }
+        if (extensions == null)
+        {
+            throw new ArgumentNullException(nameof(extensions));
+        }
+
+        CelEnvironment = celEnvironment;
+        Extensions = extensions;
     }
 
     /// <summary>
@@ -44,16 +49,7 @@ public class ConstraintCache
     private ConcurrentDictionary<FieldDescriptor, List<CompiledExpression>> DescriptorMap { get; } = new();
 
     private CelEnvironment CelEnvironment { get; }
-
-    public ConstraintCache(CelEnvironment celEnvironment)
-    {
-        if (celEnvironment == null)
-        {
-            throw new ArgumentNullException(nameof(celEnvironment));
-        }
-
-        CelEnvironment = celEnvironment;
-    }
+    private IList<FieldDescriptor> Extensions { get; }
 
     public List<CompiledProgram> Compile(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems)
     {
@@ -78,9 +74,14 @@ public class ConstraintCache
                     continue;
                 }
 
-                var constraints = options.GetExtension(PrivateExtensions.Field);
+                var constraints = options.GetExtension(ValidateExtensions.Predefined);
 
-                var expressions = Expression.FromPrivConstraints(constraints.Cel).ToList();
+                if (constraints == null)
+                {
+                    constraints = new PredefinedConstraints();
+                }
+
+                var expressions = Expression.FromConstraints(constraints.Cel).ToList();
 
                 var compiledPrograms = new List<CompiledExpression>();
 
@@ -93,6 +94,82 @@ public class ConstraintCache
                 }
 
                 DescriptorMap[constraintFieldDescriptor] = compiledPrograms;
+            }
+        }
+
+        //this is where we would compile the extensions, if there are any.
+        var ruleType = rulesMessage.GetType();
+
+        foreach (var extensionFieldDescriptor in Extensions.Where(c => c.IsExtension && c.ExtendeeType.ClrType == ruleType))
+        {
+            var extensionOptions = extensionFieldDescriptor.GetOptions();
+            var predefinedConstraints = extensionOptions.GetExtension(ValidateExtensions.Predefined);
+            if (predefinedConstraints == null)
+            {
+                continue;
+            }
+
+            var extension = extensionFieldDescriptor.Extension;
+            var extensionType = extension.GetType();
+            var extensionTypeGenericArguments = extensionType.GetGenericArguments();
+            var extensionValueType = extensionTypeGenericArguments[1];
+            var extendableMessageType = typeof(IExtendableMessage<>).MakeGenericType(ruleType);
+
+            object? extensionValue = null;
+
+            if (extensionType.GetGenericTypeDefinition() == typeof(Google.Protobuf.RepeatedExtension<,>))
+            {
+                //we have a repeated extension
+                var getExtensionValueMethod = extendableMessageType.GetMethods().FirstOrDefault(c => c.Name == "GetExtension" && c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == extensionType.GetGenericTypeDefinition());
+                if (getExtensionValueMethod == null)
+                {
+                    throw new ValidationException($"GetExtension method not found on type {extendableMessageType.FullName}.  Google may have changed the interface of Google.Protobuf library.");
+                }
+
+                var genericGetExtensionValueMethod = getExtensionValueMethod.MakeGenericMethod(extensionValueType);
+
+                extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
+                if (extensionValue == null)
+                {
+                    continue;
+                }
+            }
+            else if (extensionType.GetGenericTypeDefinition() == typeof(Google.Protobuf.Extension<,>))
+            {
+                //we have a single-value extension
+                var hasExtensionMethod = extendableMessageType.GetMethod("HasExtension", BindingFlags.Instance | BindingFlags.Public);
+                if (hasExtensionMethod == null)
+                {
+                    throw new ValidationException($"HasExtension method not found on type {extendableMessageType.FullName}.  Google may have changed the interface of Google.Protobuf library.");
+                }
+
+                var genericHasExtensionMethod = hasExtensionMethod.MakeGenericMethod(new System.Type[] { extensionValueType });
+
+                var hasExtension = (bool?)genericHasExtensionMethod.Invoke(rulesMessage, new object?[] { extension }) ?? false;
+                if (!hasExtension)
+                {
+                    continue;
+                }
+
+                var getExtensionValueMethod = extendableMessageType.GetMethods().FirstOrDefault(c => c.Name == "GetExtension" && c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == extensionType.GetGenericTypeDefinition());
+                if (getExtensionValueMethod == null)
+                {
+                    throw new ValidationException($"GetExtension method not found on type {extendableMessageType.FullName}.  Google may have changed the interface of Google.Protobuf library.");
+                }
+
+                var genericGetExtensionValueMethod = getExtensionValueMethod.MakeGenericMethod(extensionValueType);
+
+                extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
+            }
+
+            var expressions = Expression.FromConstraints(predefinedConstraints.Cel).ToList();
+
+            foreach (var expression in expressions)
+            {
+                var celExpression = CelEnvironment.Compile(expression.ExpressionText);
+
+                var compiledProgram = new CompiledProgram(celExpression, null, extensionValue, expression);
+                compiledProgramList.Add(compiledProgram);
             }
         }
 
@@ -134,7 +211,7 @@ public class ConstraintCache
 
             if (DescriptorMap.TryGetValue(constraintFieldDescriptor, out var compiledExpressionList))
             {
-                var compiledPrograms = compiledExpressionList.Select(c => new CompiledProgram(c.CelProgramDelegate, rulesMessage, c.Source)).ToList();
+                var compiledPrograms = compiledExpressionList.Select(c => new CompiledProgram(c.CelProgramDelegate, rulesMessage, null, c.Source)).ToList();
                 compiledProgramList.AddRange(compiledPrograms);
             }
         }
@@ -172,6 +249,21 @@ public class ConstraintCache
             throw new CompilationException($"Expected constraint '{expectedConstraintDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
         }
 
-        return (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldConstraints);
+        var typedFieldConstraints = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldConstraints);
+
+
+        return typedFieldConstraints;
+    }
+
+    private class CompiledExpression
+    {
+        public CompiledExpression(Expression source, CelProgramDelegate celProgramDelegate)
+        {
+            Source = source;
+            CelProgramDelegate = celProgramDelegate;
+        }
+
+        public Expression Source { get; }
+        public CelProgramDelegate CelProgramDelegate { get; }
     }
 }

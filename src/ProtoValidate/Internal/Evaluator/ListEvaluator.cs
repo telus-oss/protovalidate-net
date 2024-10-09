@@ -23,7 +23,7 @@ public class ListEvaluator : IEvaluator
     {
         FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
-
+        
         var ignore = fieldConstraints.Repeated?.Items?.CalculateIgnore(fieldDescriptor) ?? Ignore.Unspecified;
         ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor, ignore);
     }

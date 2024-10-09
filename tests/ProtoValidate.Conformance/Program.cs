@@ -51,7 +51,19 @@ internal class Program
         {
             ValidateExtensions.Message,
             ValidateExtensions.Field,
-            ValidateExtensions.Oneof
+            ValidateExtensions.Oneof,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.BoolFalseProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.BytesValidPathProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.DoubleAbsRangeProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.DurationTooLongProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.EnumNonZeroProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.Fixed32EvenProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.Fixed64EvenProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.FloatAbsRangeProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.Int32AbsInProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.Int64AbsInProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.RepeatedAtLeastFiveProto2,
+            Buf.Validate.Conformance.Cases.PredefinedRulesProto2Extensions.Sfixed32EvenProto2,
         };
 
         var remoteFileDescriptors = FileDescriptor.BuildFromByteStrings(request.Fdset.File.Select(c => c.ToByteString()), extensionRegistry);

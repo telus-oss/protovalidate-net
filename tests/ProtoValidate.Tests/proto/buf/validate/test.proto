@@ -5,7 +5,7 @@ package buf.validate;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
-option csharp_namespace = "buf.validate";
+option csharp_namespace = "Buf.Validate";
 
 
 message ListMinMaxTest {

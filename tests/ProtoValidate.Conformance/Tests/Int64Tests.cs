@@ -59,7 +59,7 @@ public class Int64Tests
         };
 
         var validationResult = Validator!.Validate(message, false);
-        Assert.IsFalse(validationResult.IsSuccess);
+        Assert.That(validationResult.IsSuccess, Is.False);
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class Int64Tests
         };
 
         var validationResult = Validator!.Validate(message, false);
-        Assert.IsFalse(validationResult.IsSuccess);
+        Assert.That(validationResult.IsSuccess, Is.False);
     }
 
     [Test]
@@ -101,7 +101,7 @@ public class Int64Tests
         };
 
         var validationResult = Validator!.Validate(message, false);
-        Assert.IsTrue(validationResult.IsSuccess);
+        Assert.That(validationResult.IsSuccess, Is.True);
     }
 
     [Test]
@@ -123,6 +123,6 @@ public class Int64Tests
         };
 
         var validationResult = Validator!.Validate(message, false);
-        Assert.IsFalse(validationResult.IsSuccess);
+        Assert.That(validationResult.IsSuccess, Is.False);
     }
 }

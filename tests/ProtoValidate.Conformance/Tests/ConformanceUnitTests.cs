@@ -93,14 +93,14 @@ public class ConformanceUnitTests
 
         var testResults = Validate(testData!, false);
 
-        //test for Runtime.
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), string.IsNullOrWhiteSpace(testResults.RuntimeError));
+        //test for unexpected errors
+        Assert.That(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), Is.EqualTo(string.IsNullOrWhiteSpace(testResults.UnexpectedError)), testResults.UnexpectedError);
 
         //test for compilation errors
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError), string.IsNullOrWhiteSpace(testResults.CompilationError));
+        Assert.That(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testResults.CompilationError)), testResults.CompilationError);
 
-        //test for unexpected errors
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), string.IsNullOrWhiteSpace(testResults.UnexpectedError));
+        //test for Runtime.
+        Assert.That(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testResults.RuntimeError)), testResults.RuntimeError);
 
         if (testCase.ExpectedResult == null)
         {
@@ -176,12 +176,12 @@ public class ConformanceUnitTests
 
         if (testCase!.ExpectedResult!.Success)
         {
-            Assert.IsTrue(testResults.Success);
+            Assert.That(testResults.Success, Is.True);
         }
         else
         {
-            Assert.IsFalse(testResults.Success);
-            Assert.AreEqual(testCase.ExpectedResult?.ValidationError?.Violations_.Count ?? 0, testResults?.ValidationError?.Violations_.Count ?? 0);
+            Assert.That(testResults.Success, Is.False);
+            Assert.That(testCase.ExpectedResult?.ValidationError?.Violations_.Count ?? 0, Is.EqualTo(testResults?.ValidationError?.Violations_.Count ?? 0));
         }
     }
     [Test]
