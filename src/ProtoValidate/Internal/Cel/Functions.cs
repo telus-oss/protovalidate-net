@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2024 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Collections;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using Cel;
@@ -31,6 +32,7 @@ public static class Functions
 
         celEnvironment.RegisterFunction("isEmail", new[] { typeof(string) }, IsEmail);
         celEnvironment.RegisterFunction("isHostname", new[] { typeof(string) }, IsHostname);
+        celEnvironment.RegisterFunction("isHostAndPort", new[] { typeof(string), typeof(bool) }, IsHostAndPort);
         celEnvironment.RegisterFunction("isIp", new[] { typeof(string) }, IsIP);
         celEnvironment.RegisterFunction("isIp", new[] { typeof(string), typeof(long) }, IsIP);
         celEnvironment.RegisterFunction("isIpPrefix", new[] { typeof(string) }, IsIPPrefix);
@@ -46,6 +48,7 @@ public static class Functions
         celEnvironment.RegisterFunction("endsWith", new[] { typeof(ByteString), typeof(ByteString) }, EndsWith_Bytes);
         celEnvironment.RegisterFunction("contains", new[] { typeof(ByteString), typeof(ByteString) }, Contains_Bytes);
     }
+
 
     private static object? Unique(object?[] args)
     {
@@ -382,10 +385,9 @@ public static class Functions
         {
             lowerCaseHostname = lowerCaseHostname.Substring(0, lowerCaseHostname.Length - 1);
         }
-
         var split = lowerCaseHostname.Split('.');
 
-
+        bool allDigits = true;
         foreach (var part in split)
         {
             var len = part.Length;
@@ -398,15 +400,88 @@ public static class Functions
             {
                 var ch = part[i];
 
-                if ((ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') && ch != '-')
+                if (!char.IsLower(ch) && !char.IsDigit(ch) && ch != '-')
                 {
                     return false;
                 }
+
+                allDigits = allDigits && Char.IsDigit(ch);
             }
         }
 
-        return true;
+        // the last part cannot be all numbers
+        return !allDigits;
     }
+
+    private static bool IsPort(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var port))
+        {
+            if (port >= 0 && port <= 65535)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static object? IsHostAndPort(object?[] args)
+    {
+        if (args.Length != 2)
+        {
+            throw new CelExpressionParserException("The `isHostAndPort` function requires 2 arguments.");
+        }
+
+        var valueArg = args[0];
+        var portRequiredArg = args[1];
+
+        if (valueArg is string valueString && portRequiredArg is bool portRequired)
+        {
+            return IsHostAndPort(valueString, portRequired);
+        }
+
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isHostAndPort' function with argument types '{valueArg?.GetType().FullName ?? "null"}' and '{portRequiredArg?.GetType().FullName ?? "null"}'.");
+    }
+
+    private static bool IsHostAndPort(string value, bool portRequired)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        int splitIdx = value.LastIndexOf(':');
+        if (value[0] == '[')
+        {
+            // ipv6
+            int end = value.IndexOf(']');
+            if (end + 1 == value.Length)
+            {
+                // no port
+                return !portRequired && IsIP(value.Substring(1, end - 1), 6);
+            }
+            if (end + 1 == splitIdx)
+            {
+                // port
+                return IsIP(value.Substring(1, end - 1), 6) && IsPort(value.Substring(splitIdx + 1));
+            }
+            return false; // malformed
+        }
+        if (splitIdx < 0)
+        {
+            return !portRequired && (IsHostname(value) || IsIP(value, 4));
+        }
+        var host = value.Substring(0, splitIdx);
+        var port = value.Substring(splitIdx + 1);
+        return (IsHostname(host) || IsIP(host, 4)) && IsPort(port);
+    }
+
 
     private static object? IsUri(object?[] args)
     {
@@ -421,7 +496,7 @@ public static class Functions
         }
 
 
-        var isUri =  Uri.TryCreate(valueString, UriKind.Absolute, out var uri);
+        var isUri = Uri.TryCreate(valueString, UriKind.Absolute, out var uri);
         if (!isUri)
         {
             return false;
