@@ -13,7 +13,7 @@
 // limitations under the License.
 
 using System.Collections;
-using buf.validate;
+using Buf.Validate;
 using NUnit.Framework;
 
 namespace ProtoValidate.Tests;

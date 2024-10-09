@@ -101,7 +101,7 @@ public class FieldEvaluator : IEvaluator
         {
             return ValidationResult.Empty;
         }
-        
+
         var evalResult = ValueEvaluator.Evaluate(new ObjectValue(FieldDescriptor, fieldValue), failFast);
         var violations = evalResult.Violations.PrefixErrorPaths("{0}", FieldDescriptor.Name);
 

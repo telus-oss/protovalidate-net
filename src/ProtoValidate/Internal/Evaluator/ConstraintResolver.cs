@@ -84,6 +84,47 @@ public class ConstraintResolver
 
         var fieldConstraints = options.GetExtension(ValidateExtensions.Field);
 
+#pragma warning disable CS0612 // Type or member is obsolete
+        if (fieldConstraints.Ignore == Ignore.Unspecified)
+        {
+            if (descriptor.HasPresence)
+            {
+                fieldConstraints.Ignore = Ignore.IfUnpopulated;
+            }
+
+            if (fieldConstraints.HasIgnoreEmpty && fieldConstraints.IgnoreEmpty)
+
+            {
+                fieldConstraints.Ignore = Ignore.IfUnpopulated;
+            }
+
+            if (fieldConstraints.HasSkipped && fieldConstraints.Skipped)
+            {
+                fieldConstraints.Ignore = Ignore.Always;
+            }
+        }
+        else if (fieldConstraints.Ignore == Ignore.Empty)
+        {
+            fieldConstraints.Ignore = Ignore.IfUnpopulated;
+        }
+        else if (fieldConstraints.Ignore == Ignore.Default)
+        {
+            fieldConstraints.Ignore = Ignore.IfDefaultValue;
+        }
+#pragma warning restore CS0612 // Type or member is obsolete
+
         return fieldConstraints;
+    }
+
+    public PredefinedConstraints ResolvePredefinedConstraints(FieldDescriptor descriptor)
+    {
+        var options = descriptor.GetOptions();
+        if (options == null || !options.HasExtension(ValidateExtensions.Predefined))
+        {
+            return new PredefinedConstraints();
+        }
+
+        var predefinedConstraints = options.GetExtension(ValidateExtensions.Predefined);
+        return predefinedConstraints;
     }
 }

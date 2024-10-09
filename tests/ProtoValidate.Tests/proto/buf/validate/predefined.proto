@@ -1,0 +1,29 @@
+﻿syntax = "proto2";
+
+package buf.validate;
+
+import "buf/validate/validate.proto";
+
+option csharp_namespace = "Buf.Validate";
+
+extend buf.validate.UInt64Rules {
+  optional bool is_even = 11161 [(buf.validate.predefined).cel = {
+    id: "uint64.even.proto2"
+    expression: "(this % 2u == 0u) == rule"
+    message: "uint64 value is not even"
+  }];
+
+  optional bool is_odd = 11162 [(buf.validate.predefined).cel = {
+    id: "uint64.odd.proto2"
+    expression: "(this % 2u == 1u) == rule"
+    message: "uint64 value is not odd"
+  }];
+}
+
+
+message TestUInt64EvenValidatorMessage {
+  optional uint64 val = 1 [
+      (buf.validate.field).uint64.(is_even) = true,
+      (buf.validate.field).uint64.(is_odd) = false
+  ];
+}

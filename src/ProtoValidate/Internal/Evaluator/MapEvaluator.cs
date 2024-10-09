@@ -19,11 +19,6 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class MapEvaluator : IEvaluator
 {
-    public ValueEvaluator KeyEvaluator { get; }
-    public ValueEvaluator ValueEvaluator { get; }
-    public FieldDescriptor FieldDescriptor { get; }
-    public FieldConstraints FieldConstraints { get; }
-
     public MapEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
         if (fieldConstraints == null)
@@ -50,10 +45,10 @@ public class MapEvaluator : IEvaluator
         ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor, mapRulesValuesFieldConstraints.CalculateIgnore(valueDescriptor));
     }
 
-    public override string ToString()
-    {
-        return $"Map Evaluator {FieldDescriptor.FullName}";
-    }
+    public ValueEvaluator KeyEvaluator { get; }
+    public ValueEvaluator ValueEvaluator { get; }
+    public FieldDescriptor FieldDescriptor { get; }
+    public FieldConstraints FieldConstraints { get; }
 
     public bool Tautology => KeyEvaluator.Tautology && ValueEvaluator.Tautology;
 
@@ -82,6 +77,11 @@ public class MapEvaluator : IEvaluator
         }
 
         return new ValidationResult(violations);
+    }
+
+    public override string ToString()
+    {
+        return $"Map Evaluator {FieldDescriptor.FullName}";
     }
 
     private List<Violation> EvalPairs(IValue key, IValue value, bool failFast)

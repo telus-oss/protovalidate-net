@@ -4,7 +4,7 @@ package buf.validate;
 
 import "buf/validate/validate.proto";
 
-option csharp_namespace = "buf.validate";
+option csharp_namespace = "Buf.Validate";
 
 message NestedMessageLevel1 {
   string value = 1 [(buf.validate.field).string.len = 10];

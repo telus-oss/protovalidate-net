@@ -13,9 +13,11 @@
 // limitations under the License.
 
 using System.Text;
+using Buf.Validate;
 using Cel;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using ProtoValidate.Internal.Cel;
 using ProtoValidate.Internal.Evaluator;
@@ -25,11 +27,9 @@ namespace ProtoValidate;
 
 public class Validator : IValidator
 {
-    private ValidatorOptions Options { get; }
-
-    private EvaluatorBuilder? EvaluatorBuilder { get; set; }
-
-    public Validator() : this(new ValidatorOptions()) { }
+    public Validator() : this(new ValidatorOptions())
+    {
+    }
 
     public Validator(ValidatorOptions options)
     {
@@ -47,6 +47,9 @@ public class Validator : IValidator
         Options = optionsAccessor.Value;
         Initialize();
     }
+    private ValidatorOptions Options { get; }
+
+    private EvaluatorBuilder? EvaluatorBuilder { get; set; }
 
     public ValidationResult Validate(IMessage message, bool failFast)
     {
@@ -56,21 +59,60 @@ public class Validator : IValidator
         }
 
         var descriptor = message.Descriptor;
+
+
         var evaluator = EvaluatorBuilder!.Load(descriptor);
 
         return evaluator.Evaluate(new MessageValue(message), failFast);
+    }
+
+    public string GetEvaluatorDebugString(IMessage message)
+    {
+        if (message == null)
+        {
+            throw new ArgumentNullException(nameof(message));
+        }
+
+        var descriptor = message.Descriptor;
+        var evaluator = EvaluatorBuilder!.Load(descriptor);
+        return GetEvaluatorDebugString(evaluator, 0, new List<IEvaluator>());
     }
 
     private void Initialize()
     {
         var fileDescriptorList = Options.FileDescriptors ?? new List<FileDescriptor>();
 
+        var extensions = new List<FieldDescriptor>();
+        extensions.AddRange(fileDescriptorList.SelectMany(c => c.Extensions.UnorderedExtensions));
+
+        // TypeRegistry typeRegistry;
+        // var extensionRegistry = new ExtensionRegistry();
+        //
+        //
+        // if (Options.Extensions != null && Options.Extensions.Count > 0)
+        // {
+        //     extensionRegistry.Add(ValidateExtensions.Message);
+        //     extensionRegistry.Add(ValidateExtensions.Oneof);
+        //     extensionRegistry.Add(ValidateExtensions.Field);
+        //     extensionRegistry.Add(ValidateExtensions.Predefined);
+        //     extensionRegistry.AddRange(Options.Extensions);
+        //
+        //     var descriptorSerializedDataList = GetRequiredFileDescriptors().Union(fileDescriptorList).Select(proto => proto.SerializedData).ToList();
+        //
+        //     var typeRegistryFileDescriptors = FileDescriptor.BuildFromByteStrings(descriptorSerializedDataList, extensionRegistry).ToList();
+        //     typeRegistry = TypeRegistry.FromFiles(typeRegistryFileDescriptors);
+        // }
+        // else
+        // {
+        //     typeRegistry = TypeRegistry.FromFiles(fileDescriptorList);
+        // }
+
         var celEnvironment = new CelEnvironment(fileDescriptorList, "");
         celEnvironment.StrictTypeComparison = true;
         celEnvironment.RegisterProtoValidateFunctions();
         celEnvironment.RegisterProtoValidateFormatFunction();
 
-        EvaluatorBuilder = new EvaluatorBuilder(celEnvironment, Options.DisableLazy);
+        EvaluatorBuilder = new EvaluatorBuilder(celEnvironment, Options.DisableLazy, extensions);
 
         if (Options.PreLoadDescriptors)
         {
@@ -87,18 +129,6 @@ public class Validator : IValidator
                 }
             }
         }
-    }
-
-    public string GetEvaluatorDebugString(IMessage message)
-    {
-        if (message == null)
-        {
-            throw new ArgumentNullException(nameof(message));
-        }
-
-        var descriptor = message.Descriptor;
-        var evaluator = EvaluatorBuilder!.Load(descriptor);
-        return GetEvaluatorDebugString(evaluator, 0, new List<IEvaluator>());
     }
 
     private string GetEvaluatorDebugString(IEvaluator evaluator, int nestLevel, List<IEvaluator> visitedEvaluators)

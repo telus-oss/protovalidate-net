@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using buf.validate;
 using Buf.Validate;
 using NUnit.Framework;
 
@@ -31,6 +30,6 @@ public class ConstraintResolveTests
 
         var messageConstraints = messageOptions.GetExtension(messageExtension);
 
-        Assert.IsNotNull(messageConstraints);
+        Assert.That(messageConstraints, Is.Not.Null);
     }
 }

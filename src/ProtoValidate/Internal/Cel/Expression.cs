@@ -52,32 +52,7 @@ public class Expression
         Message = constraint.Message;
         ExpressionText = constraint.Expression;
     }
-
-    public Expression(Buf.Validate.Priv.Constraint constraint)
-    {
-        if (constraint == null)
-        {
-            throw new ArgumentNullException(nameof(constraint));
-        }
-
-        Id = constraint.Id;
-        Message = constraint.Message;
-        ExpressionText = constraint.Expression;
-    }
-
-    public static IEnumerable<Expression> FromPrivConstraints(IEnumerable<Buf.Validate.Priv.Constraint> constraints)
-    {
-        if (constraints == null)
-        {
-            throw new ArgumentNullException(nameof(constraints));
-        }
-
-        foreach (var constraint in constraints)
-        {
-            yield return new Expression(constraint);
-        }
-    }
-
+    
     public static IEnumerable<Expression> FromConstraints(IEnumerable<Constraint> constraints)
     {
         if (constraints == null)

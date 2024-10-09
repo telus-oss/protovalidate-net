@@ -24,11 +24,13 @@ public class CompiledProgram
     public CelProgramDelegate CelProgramDelegate { get; }
     public Expression Source { get; }
     public IMessage? Rules { get; }
+    public object? Rule { get; }
 
-    public CompiledProgram(CelProgramDelegate celExpressionDelegate, IMessage? rules, Expression source)
+    public CompiledProgram(CelProgramDelegate celExpressionDelegate, IMessage? rules, object?  rule, Expression? source)
     {
         CelProgramDelegate = celExpressionDelegate ?? throw new ArgumentNullException(nameof(celExpressionDelegate));
         Rules = rules;
+        Rule = rule;
         Source = source ?? throw new ArgumentNullException(nameof(source));
     }
 
@@ -48,6 +50,14 @@ public class CompiledProgram
                 variables.Remove("rules");
             }
 
+            if (Rule != null)
+            {
+                variables["rule"] = Rule;
+            }
+            else
+            {
+                variables.Remove("rule");
+            }
             evalResult = CelProgramDelegate?.Invoke(variables);
         }
         catch (Exception x)
