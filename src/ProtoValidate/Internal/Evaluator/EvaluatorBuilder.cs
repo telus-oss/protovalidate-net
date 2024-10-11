@@ -170,8 +170,9 @@ public class EvaluatorBuilder
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
 
-        var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.IgnoreEmpty);
-        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints.Required, fieldConstraints.IgnoreEmpty || fieldDescriptor.HasPresence);
+        var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.CalculateIgnore(fieldDescriptor));
+
+        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints);
         BuildValue(fieldDescriptor, fieldConstraints, false, fieldEvaluator.ValueEvaluator, nestedMessageEvaluators);
         return fieldEvaluator;
     }
@@ -209,7 +210,7 @@ public class EvaluatorBuilder
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
 
         if (fieldDescriptor.FieldType != FieldType.Message
-            || fieldConstraints.Skipped
+            || (fieldConstraints.CalculateIgnore(fieldDescriptor) == Ignore.Always)
             || fieldDescriptor.IsMap
             || (fieldDescriptor.IsRepeated && !forItems)
             || GoogleWellKnownTypes.Contains(fieldDescriptor.MessageType.FullName))
@@ -228,7 +229,7 @@ public class EvaluatorBuilder
     private void ProcessWrapperConstraints(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems, ValueEvaluator valueEvaluatorEval, IDictionary<MessageDescriptor, IEvaluator> nestedMessageEvaluators)
     {
         if (fieldDescriptor.FieldType != FieldType.Message
-            || fieldConstraints.Skipped
+            || (fieldConstraints.CalculateIgnore(fieldDescriptor) == Ignore.Always)
             || fieldDescriptor.IsMap
             || (fieldDescriptor.IsRepeated && !forItems))
         {
@@ -254,7 +255,7 @@ public class EvaluatorBuilder
             return;
         }
 
-        var unwrapped = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.IgnoreEmpty);
+        var unwrapped = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.CalculateIgnore(fieldDescriptor));
         BuildValue(valueFieldDescriptor, fieldConstraints, true, unwrapped, nestedMessageEvaluators);
         valueEvaluatorEval.AddEvaluator(unwrapped);
     }
@@ -303,7 +304,6 @@ public class EvaluatorBuilder
         {
             return;
         }
-
 
         var mapKeyFieldConstraints = fieldConstraints.Map?.Keys ?? new FieldConstraints();
         var mapValuesFieldConstraints = fieldConstraints.Map?.Values ?? new FieldConstraints();

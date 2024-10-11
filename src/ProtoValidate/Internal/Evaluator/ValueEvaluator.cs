@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Globalization;
+using System.Reflection;
 using Buf.Validate;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -23,22 +25,18 @@ public class ValueEvaluator : IEvaluator
 {
     public FieldConstraints FieldConstraints { get; }
     public FieldDescriptor FieldDescriptor { get; }
+    public Ignore Ignore { get; }
+    private object? DefaultValue { get; }
     public List<IEvaluator> Evaluators { get; } = new();
 
-    public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor, bool ignoreEmpty)
+    public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor, Ignore ignore)
     {
         FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
-        IgnoreEmpty = ignoreEmpty;
+        Ignore = ignore;
+        DefaultValue = fieldDescriptor.GetDefaultValue();
     }
-
-
-    /// <summary>
-    ///     Indicates that the Constraints should not be applied if the field is unset or the default
-    ///     (typically zero) value.
-    /// </summary>
-    public bool IgnoreEmpty { get; }
-
+    
     public override string ToString()
     {
         return $"Value Evaluator: {FieldDescriptor.FullName}";
@@ -59,14 +57,26 @@ public class ValueEvaluator : IEvaluator
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
-        if (IgnoreEmpty)
+        if (Ignore == Ignore.IfUnpopulated || Ignore == Ignore.IfDefaultValue)
         {
             if (value == null)
             {
                 return ValidationResult.Empty;
             }
 
-            if (!FieldDescriptor.HasPresence && IsDefaultValue(value.Value<object?>()))
+            if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value.Value<object?>()))
+            {
+                if (!FieldDescriptor.HasPresence)
+                {
+                    return ValidationResult.Empty;
+                }
+                if (FieldDescriptor.ContainingType != null && FieldDescriptor.ContainingType.IsMapEntry)
+                {
+                    return ValidationResult.Empty;
+                }
+            }
+
+            if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value.Value<object?>()))
             {
                 return ValidationResult.Empty;
             }
@@ -102,16 +112,36 @@ public class ValueEvaluator : IEvaluator
 
         try
         {
-            if (val is string stringFieldValue && string.IsNullOrEmpty(stringFieldValue))
+            if (val is string stringFieldValue)
             {
-               return true;
+                if (string.IsNullOrEmpty(DefaultValue?.ToString()) && string.IsNullOrEmpty(stringFieldValue))
+                {
+                    return true;
+                }
+                if (string.Equals(DefaultValue?.ToString(), stringFieldValue, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                return false;
             }
+
             if (val is ByteString byteStringFieldValue && byteStringFieldValue.Length == 0)
             {
+                //check this for default value
                 return true;
             }
+
+
+            if (val is IMessage innerMessage)
+            {
+                if (innerMessage.CalculateSize() == 0)
+                {
+                    return true;
+                }
+            }
             
-            if (ValueEquality(val, 0) || ValueEquality(val, 0.0))
+            if (ValueEquality(val, DefaultValue))
             {
                 return true;
             }
@@ -124,7 +154,7 @@ public class ValueEvaluator : IEvaluator
         return false;
     }
 
-    public static bool ValueEquality(object val1, object val2)
+    public static bool ValueEquality(object val1, object? val2)
     {
         if (!(val1 is IConvertible))
         {

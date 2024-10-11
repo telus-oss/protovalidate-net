@@ -19,29 +19,18 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class ListEvaluator : IEvaluator
 {
-    public ValueEvaluator ItemConstraints { get; }
-    public FieldDescriptor FieldDescriptor { get; }
-    public FieldConstraints FieldConstraints { get; }
-
-
     public ListEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
     {
         FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
 
-        var ignoreEmpty = false;
-        if (fieldConstraints.Repeated?.Items?.IgnoreEmpty != null)
-        {
-            ignoreEmpty = fieldConstraints.Repeated.Items.IgnoreEmpty;
-        }
-
-        ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor, ignoreEmpty);
+        var ignore = fieldConstraints.Repeated?.Items?.CalculateIgnore(fieldDescriptor) ?? Ignore.Unspecified;
+        ItemConstraints = new ValueEvaluator(fieldConstraints, fieldDescriptor, ignore);
     }
 
-    public override string ToString()
-    {
-        return $"List Evaluator: {FieldDescriptor.FullName}";
-    }
+    public ValueEvaluator ItemConstraints { get; }
+    public FieldDescriptor FieldDescriptor { get; }
+    public FieldConstraints FieldConstraints { get; }
 
     public bool Tautology => ItemConstraints.Tautology;
 
@@ -74,5 +63,10 @@ public class ListEvaluator : IEvaluator
         }
 
         return new ValidationResult(allViolations);
+    }
+
+    public override string ToString()
+    {
+        return $"List Evaluator: {FieldDescriptor.FullName}";
     }
 }

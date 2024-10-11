@@ -82,6 +82,8 @@ public class ConstraintResolver
             return new FieldConstraints();
         }
 
-        return options.GetExtension(ValidateExtensions.Field);
+        var fieldConstraints = options.GetExtension(ValidateExtensions.Field);
+
+        return fieldConstraints;
     }
 }

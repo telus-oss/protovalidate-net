@@ -16,6 +16,7 @@ using System.Collections;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using Cel;
 using Google.Protobuf;
 
@@ -321,7 +322,7 @@ public static class Functions
         {
             throw new CelExpressionParserException("IsEmail function requires 1 argument.");
         }
-
+        
         var value = args[0];
         if (value is string valueString)
         {
@@ -331,6 +332,11 @@ public static class Functions
             }
 
             if (valueString.Length > 254)
+            {
+                return false;
+            }
+
+            if (!Regex.IsMatch(valueString, "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"))
             {
                 return false;
             }

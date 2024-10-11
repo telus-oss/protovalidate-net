@@ -22,29 +22,24 @@ namespace ProtoValidate.Internal.Evaluator;
 public class FieldEvaluator : IEvaluator
 {
     public ValueEvaluator ValueEvaluator { get; }
-    private FieldDescriptor Descriptor { get; }
+    private FieldDescriptor FieldDescriptor { get; }
+    private FieldConstraints FieldConstraints { get; }
 
-
-    /// <summary>
-    ///     Indicates that the field must have a set value
-    /// </summary>
-    private bool Required { get; }
-    private bool IgnoreEmpty { get; }
-
-    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor descriptor, bool required, bool ignoreEmpty)
+    private Ignore Ignore { get; }
+    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints)
     {
         ValueEvaluator = valueEvaluator ?? throw new ArgumentNullException(nameof(valueEvaluator));
-        Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-        Required = required;
-        IgnoreEmpty = ignoreEmpty;
+        FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
+        FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
+        Ignore = fieldConstraints.CalculateIgnore(fieldDescriptor);
     }
 
     public override string ToString()
     {
-        return $"Field Evaluator: {Descriptor.FullName}";
+        return $"Field Evaluator: {FieldDescriptor.FullName}";
     }
 
-    public bool Tautology => !Required && ValueEvaluator.Tautology;
+    public bool Tautology => !FieldConstraints.Required && ValueEvaluator.Tautology;
 
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
@@ -55,22 +50,22 @@ public class FieldEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
-        var fieldValue = Descriptor.Accessor.GetValue(message); ;
+        var fieldValue = FieldDescriptor.Accessor.GetValue(message); ;
         bool hasField;
 
-        if (Descriptor.IsMap)
+        if (FieldDescriptor.IsMap)
         {
             var list = (IDictionary)fieldValue;
             hasField = list.Count > 0;
         }
-        else if (Descriptor.IsRepeated)
+        else if (FieldDescriptor.IsRepeated)
         {
             var list = (IList)fieldValue;
             hasField = list.Count > 0;
         }
-        else if (Descriptor.HasPresence)
+        else if (FieldDescriptor.HasPresence)
         {
-            hasField = Descriptor.Accessor.HasValue(message);
+            hasField = FieldDescriptor.Accessor.HasValue(message);
         }
         else
         {
@@ -89,7 +84,7 @@ public class FieldEvaluator : IEvaluator
             }
         }
 
-        if (Required && !hasField)
+        if (FieldConstraints.Required && !hasField)
         {
             return new ValidationResult(new[]
             {
@@ -97,18 +92,18 @@ public class FieldEvaluator : IEvaluator
                 {
                     ConstraintId = "required",
                     Message = "Value is required.",
-                    FieldPath = Descriptor.Name
+                    FieldPath = FieldDescriptor.Name
                 }
             });
         }
 
-        if (IgnoreEmpty && !hasField)
+        if ((Ignore == Ignore.IfUnpopulated || Ignore == Ignore.IfDefaultValue || FieldDescriptor.HasPresence) && !hasField)
         {
             return ValidationResult.Empty;
         }
         
-        var evalResult = ValueEvaluator.Evaluate(new ObjectValue(Descriptor, fieldValue), failFast);
-        var violations = evalResult.Violations.PrefixErrorPaths("{0}", Descriptor.Name);
+        var evalResult = ValueEvaluator.Evaluate(new ObjectValue(FieldDescriptor, fieldValue), failFast);
+        var violations = evalResult.Violations.PrefixErrorPaths("{0}", FieldDescriptor.Name);
 
         return new ValidationResult(violations);
     }

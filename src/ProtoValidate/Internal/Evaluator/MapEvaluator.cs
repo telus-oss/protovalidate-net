@@ -46,8 +46,8 @@ public class MapEvaluator : IEvaluator
         var mapRulesKeysFieldConstraints = mapRules?.Keys ?? new FieldConstraints();
         var mapRulesValuesFieldConstraints = mapRules?.Values ?? new FieldConstraints();
 
-        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldConstraints, keyDescriptor, mapRulesKeysFieldConstraints.IgnoreEmpty);
-        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor, mapRulesValuesFieldConstraints.IgnoreEmpty);
+        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldConstraints, keyDescriptor, mapRulesKeysFieldConstraints.CalculateIgnore(keyDescriptor));
+        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor, mapRulesValuesFieldConstraints.CalculateIgnore(valueDescriptor));
     }
 
     public override string ToString()

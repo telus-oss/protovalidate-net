@@ -140,43 +140,6 @@ public class ConstraintCache
         }
 
         return compiledProgramList;
-
-
-        //         var programs = new List<CompiledProgram>();
-        //         foreach (var astExpression in completeProgramList)
-        //         {
-        // //run some check here to ensure the expected type is returned
-        //         }
-
-
-        //     List<CompiledProgram> programs = new ArrayList<>();
-        //     for (AstExpression astExpression : completeProgramList)
-        //     {
-        //         try
-        //         {
-        //             Program program = finalEnv.program(astExpression.ast, rulesOption, PARTIAL_EVAL_OPTIONS);
-        //             Program.EvalResult evalResult = program.eval(Activation.emptyActivation());
-        //             Val value = evalResult.getVal();
-        //             if (value != null)
-        //             {
-        //                 Object val = value.value();
-        //                 if (val instanceof Boolean && value.booleanValue()) {
-        //         continue;
-        //     }
-        //     if (val instanceof String && val.equals("")) {
-        //         continue;
-        //     }
-        // }
-        // Ast residual = finalEnv.residualAst(astExpression.ast, evalResult.getEvalDetails());
-        // programs.add(
-        //         new CompiledProgram(finalEnv.program(residual, rulesOption), astExpression.source));
-        //   } catch (Exception e) {
-        //     programs.add(
-        //         new CompiledProgram(
-        //             finalEnv.program(astExpression.ast, rulesOption), astExpression.source));
-        //   }
-        // }
-        // return Collections.unmodifiableList(programs);
     }
 
     private IMessage? ResolveConstraints(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems)

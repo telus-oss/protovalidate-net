@@ -10,14 +10,14 @@
         <PackageId>ProtoValidate</PackageId>
         <Authors>TELUS</Authors>
         <Copyright>Copyright 2024 TELUS</Copyright>
-        <Description>C# implementation of protovalidate.  Supports ProtoValidate v0.5.4.</Description>
+        <Description>C# implementation of protovalidate.  Supports ProtoValidate v0.7.1.</Description>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageTags>ProtoValidate</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/telus-oss/protovalidate-net</RepositoryUrl>
         <PackageProjectUrl>https://github.com/telus-oss/protovalidate-net</PackageProjectUrl>
         <IsPackable>true</IsPackable>
-        <Version>0.2.0</Version>
+        <Version>0.3.0</Version>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <DebugType>portable</DebugType>
         <IncludeSymbols>true</IncludeSymbols>
