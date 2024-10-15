@@ -6,6 +6,7 @@
         <!-- The path of the proto files. Content from the nupkg. -->
         <ProtoValidate_ProtosPath>$( [System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)../content/proto) )</ProtoValidate_ProtosPath>
         <IncludeProtoValidateProtos Condition="'$(IncludeProtoValidateProtos)' == ''">true</IncludeProtoValidateProtos>
+        <CopyProtoValidateProtoFilesToOutput Condition="'$(CopyProtoValidateProtoFilesToOutput)' == ''">false</CopyProtoValidateProtoFilesToOutput>
     </PropertyGroup>
 
     <!-- Run immediately before the Protobuf_BeforeCompile extension point. -->
@@ -19,5 +20,11 @@
         </PropertyGroup>
         <Message Text="Included proto files at $(ProtoValidate_ProtosPath) in import path." Importance="high" />
         <Message Text="Updated proto imports path: $(Protobuf_StandardImportsPath)" Importance="high" />
+    </Target>
+    <ItemGroup>
+        <ProtoFiles Include="$(MSBuildThisFileDirectory)/../content/proto/**/*.*" />
+    </ItemGroup>
+    <Target Name="CopyFiles" AfterTargets="Build" Condition=" '$(CopyProtoValidateProtoFilesToOutput)' == 'true' ">
+        <Copy SourceFiles="@(ProtoFiles)" DestinationFolder="$(TargetDir)/proto/%(RecursiveDir)" />
     </Target>
 </Project>
