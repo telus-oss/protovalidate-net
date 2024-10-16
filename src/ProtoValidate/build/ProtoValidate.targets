@@ -6,7 +6,10 @@
         <!-- The path of the proto files. Content from the nupkg. -->
         <ProtoValidate_ProtosPath>$( [System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)../content/proto) )</ProtoValidate_ProtosPath>
         <IncludeProtoValidateProtos Condition="'$(IncludeProtoValidateProtos)' == ''">true</IncludeProtoValidateProtos>
-        <CopyProtoValidateProtoFilesToOutput Condition="'$(CopyProtoValidateProtoFilesToOutput)' == ''">false</CopyProtoValidateProtoFilesToOutput>
+        <CopyProtoValidateProtoFilesToOutputOnBuild Condition="'$(CopyProtoValidateProtoFilesToOutputOnBuild)' == ''">false</CopyProtoValidateProtoFilesToOutputOnBuild>
+        <CopyProtoValidateProtoFilesToOutputOnBuildDir Condition="'$(CopyProtoValidateProtoFilesToOutputOnBuildDir)' == ''">$(TargetDir)proto\</CopyProtoValidateProtoFilesToOutputOnBuildDir>
+        <CopyProtoValidateProtoFilesToOutputOnPublish Condition="'$(CopyProtoValidateProtoFilesToOutputOnPublish)' == ''">false</CopyProtoValidateProtoFilesToOutputOnPublish>
+        <CopyProtoValidateProtoFilesToOutputOnPublishDir Condition="'$(CopyProtoValidateProtoFilesToOutputOnPublishDir)' == ''">$(PublishDir)proto\</CopyProtoValidateProtoFilesToOutputOnPublishDir>
     </PropertyGroup>
 
     <!-- Run immediately before the Protobuf_BeforeCompile extension point. -->
@@ -22,9 +25,13 @@
         <Message Text="Updated proto imports path: $(Protobuf_StandardImportsPath)" Importance="high" />
     </Target>
     <ItemGroup>
-        <ProtoFiles Include="$(MSBuildThisFileDirectory)/../content/proto/**/*.*" />
+        <ProtoValidate_ProtoFiles Include="$(MSBuildThisFileDirectory)/../content/proto/**/*.*" />
     </ItemGroup>
-    <Target Name="CopyFiles" AfterTargets="Build" Condition=" '$(CopyProtoValidateProtoFilesToOutput)' == 'true' ">
-        <Copy SourceFiles="@(ProtoFiles)" DestinationFolder="$(TargetDir)/proto/%(RecursiveDir)" />
+    <Target Name="ProtoValidate_CopyFiles_AfterBuild" AfterTargets="Build" Condition=" '$(CopyProtoValidateProtoFilesToOutputOnBuild)' == 'true' ">
+        <Copy SourceFiles="@(ProtoValidate_ProtoFiles)" DestinationFolder="$(CopyProtoValidateProtoFilesToOutputOnBuildDir)%(RecursiveDir)" />
     </Target>
+    <Target Name="ProtoValidate_CopyFiles_AfterPublish" AfterTargets="Publish" Condition=" '$(CopyProtoValidateProtoFilesToOutputOnPublish)' == 'true' ">
+        <Copy SourceFiles="@(ProtoValidate_ProtoFiles)" DestinationFolder="$(CopyProtoValidateProtoFilesToOutputOnPublishDir)%(RecursiveDir)" />
+    </Target>
+
 </Project>
