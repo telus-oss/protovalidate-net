@@ -40,7 +40,7 @@ jobs:
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
       - name: Upload Nuget Packages to Github Action
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
           path: |
