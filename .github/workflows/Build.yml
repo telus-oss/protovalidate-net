@@ -33,7 +33,7 @@ jobs:
       - name: Test with the dotnet CLI
         run: dotnet test -p:Configuration=Release --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
       - name: Upload dotnet test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dotnet-test-results-${{ matrix.dotnet-version }}
           path: TestResults-${{ matrix.dotnet-version }}
