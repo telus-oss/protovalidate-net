@@ -12,18 +12,30 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        dotnet-version: [ '8.0.x' ]
+      matrix:        
         os: [ubuntu-latest, windows-2019]        
 
     steps:
       - uses: actions/checkout@v4      
-      - name: Setup dotnet ${{ matrix.dotnet-version }}
+      
+      - name: Setup dotnet 6.0.x
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}      
+          dotnet-version: '6.0.x'
+          
+      - name: Setup dotnet 7.0.x
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'       
+                    
+      - name: Setup dotnet 8.0.x
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'   
+      
       - name: Display dotnet version
         run: dotnet --version
+      
       - name: Display Make version
         run: make --version        
 
