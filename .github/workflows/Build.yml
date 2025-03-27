@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-2019
       
     steps:
       - uses: actions/checkout@v4
@@ -41,13 +41,13 @@ jobs:
         run: dotnet build -p:Configuration=Release
       
       - name: Test with the dotnet CLI
-        run: dotnet test -p:Configuration=Release --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
+        run: dotnet test -p:Configuration=Release --logger trx --results-directory "TestResults"
       
       - name: Upload dotnet test results
         uses: actions/upload-artifact@v4
         with:
-          name: dotnet-test-results-${{ matrix.dotnet-version }}
-          path: TestResults-${{ matrix.dotnet-version }}
+          name: dotnet-test-results
+          path: TestResults
         # Use always() to always run this step to publish test results when there are test failures
         if: ${{ always() }}
       
