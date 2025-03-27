@@ -38,11 +38,11 @@ public class ConformanceUnitTests
     private TypeRegistry? TypeRegistry { get; } = FileDescriptorUtil.GetTypeRegistry();
     private Validator? Validator { get; set; }
 
-    private TestResult Validate(IMessage dynamicMessage)
+    private TestResult Validate(IMessage dynamicMessage, bool failFast)
     {
         try
         {
-            var result = Validator!.Validate(dynamicMessage, false);
+            var result = Validator!.Validate(dynamicMessage, failFast);
             var violations = result.Violations;
             if (violations.Count == 0)
             {
@@ -91,7 +91,7 @@ public class ConformanceUnitTests
     {
         var testData = testCase!.Input?.Unpack(TypeRegistry)!;
 
-        var testResults = Validate(testData!);
+        var testResults = Validate(testData!, false);
 
         //test for Runtime.
         Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), string.IsNullOrWhiteSpace(testResults.RuntimeError));
@@ -182,6 +182,60 @@ public class ConformanceUnitTests
         {
             Assert.IsFalse(testResults.Success);
             Assert.AreEqual(testCase.ExpectedResult?.ValidationError?.Violations_.Count ?? 0, testResults?.ValidationError?.Violations_.Count ?? 0);
+        }
+    }
+    [Test]
+    [TestCaseSource(typeof(ConformanceUnitTestParser), nameof(ConformanceUnitTestParser.GetTestCases), Category = "Conformance Unit Tests")]
+    public void SimpleTestFailFast(ConformanceUnitTestCase testCase)
+    {
+        var testData = testCase!.Input?.Unpack(TypeRegistry)!;
+
+        var testResults = Validate(testData!, true);
+
+        //test for Runtime.
+        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), string.IsNullOrWhiteSpace(testResults.RuntimeError));
+
+        //test for compilation errors
+        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError), string.IsNullOrWhiteSpace(testResults.CompilationError));
+
+        //test for unexpected errors
+        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), string.IsNullOrWhiteSpace(testResults.UnexpectedError));
+
+        if (testCase.ExpectedResult == null)
+        {
+            Assert.Fail("We need expected result to have a value.");
+            return;
+        }
+
+        if (testCase!.ExpectedResult!.Success)
+        {
+            Assert.IsTrue(testResults.Success);
+            Assert.That(testResults.ValidationError?.Violations_, Is.Null);
+        }
+        else if (testCase.ExpectedResult.HasUnexpectedError)
+        {
+            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.ValidationError?.Violations_, Is.Null);
+            Assert.That(testResults.HasUnexpectedError, Is.True);
+            
+        }
+        else if (testCase.ExpectedResult.HasRuntimeError)
+        {
+            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.ValidationError?.Violations_, Is.Null);
+            Assert.That(testResults.HasRuntimeError, Is.True);
+        }
+        else if (testCase.ExpectedResult.HasCompilationError)
+        {
+            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.ValidationError?.Violations_, Is.Null);
+            Assert.That(testResults.HasCompilationError, Is.True);
+        }
+        else
+        {
+            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.ValidationError?.Violations_, Is.Not.Null);
+            Assert.That(testResults.ValidationError!.Violations_.Count, Is.EqualTo(1));
         }
     }
 }

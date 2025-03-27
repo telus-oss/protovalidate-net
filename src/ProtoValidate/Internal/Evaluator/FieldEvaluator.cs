@@ -50,7 +50,7 @@ public class FieldEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
-        var fieldValue = FieldDescriptor.Accessor.GetValue(message); ;
+        var fieldValue = FieldDescriptor.Accessor.GetValue(message);
         bool hasField;
 
         if (FieldDescriptor.IsMap)

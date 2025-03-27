@@ -120,7 +120,7 @@ public class EvaluatorBuilder
                 return;
             }
 
-            if (messageDescriptor.IsMapEntry)
+            if (messageDescriptor.Parser == null)
             {
                 return;
             }

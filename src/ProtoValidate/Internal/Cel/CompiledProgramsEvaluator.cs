@@ -43,20 +43,19 @@ public class CompiledProgramsEvaluator : IEvaluator
 
         foreach (var compiledProgram in CompiledPrograms)
         {
-            //Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
+            // Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
 
             var violation = compiledProgram.Eval(variables);
             if (violation != null)
             {
                 violation.Value = value?.Value<object?>();
-                //Console.WriteLine($"  Rule found violation: {violation}");
+                // Console.WriteLine($"  Rule found violation: {violation}");
                 violationList.Add(violation);
             }
-            //Console.WriteLine();
-
-            if (failFast)
+        
+            if (failFast && violationList.Count > 0 )
             {
-                break;
+                return new ValidationResult(violationList);
             }
         }
 
