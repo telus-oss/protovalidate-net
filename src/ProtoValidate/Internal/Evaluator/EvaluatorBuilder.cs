@@ -120,6 +120,11 @@ public class EvaluatorBuilder
                 return;
             }
 
+            if (messageDescriptor.IsMapEntry)
+            {
+                return;
+            }
+
             var defaultInstance = messageDescriptor.Parser.ParseFrom(Array.Empty<byte>());
             // var descriptor = defaultInstance.Descriptor;
             var messageConstraints = ConstraintResolver.ResolveMessageConstraints(messageDescriptor);
