@@ -17,7 +17,7 @@
         <RepositoryUrl>https://github.com/telus-oss/protovalidate-net</RepositoryUrl>
         <PackageProjectUrl>https://github.com/telus-oss/protovalidate-net</PackageProjectUrl>
         <IsPackable>true</IsPackable>
-        <Version>0.3.3</Version>
+        <Version>0.3.4</Version>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <DebugType>portable</DebugType>
         <IncludeSymbols>true</IncludeSymbols>

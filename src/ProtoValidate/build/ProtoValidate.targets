@@ -27,7 +27,7 @@
     <ItemGroup>
         <ProtoValidate_ProtoFiles Include="$(MSBuildThisFileDirectory)/../content/proto/**/*.*" />
     </ItemGroup>
-    <Target Name="ProtoValidate_CopyFiles_AfterBuild" AfterTargets="Build" Condition=" '$(CopyProtoValidateProtoFilesToOutputOnBuild)' == 'true' ">
+    <Target Name="ProtoValidate_CopyFiles_AfterBuild" BeforeTargets="AfterBuild" AfterTargets="Build" Condition=" '$(CopyProtoValidateProtoFilesToOutputOnBuild)' == 'true' ">
         <Copy SourceFiles="@(ProtoValidate_ProtoFiles)" DestinationFolder="$(CopyProtoValidateProtoFilesToOutputOnBuildDir)%(RecursiveDir)" />
     </Target>
     <Target Name="ProtoValidate_CopyFiles_AfterPublish" AfterTargets="Publish" Condition=" '$(CopyProtoValidateProtoFilesToOutputOnPublish)' == 'true' ">
