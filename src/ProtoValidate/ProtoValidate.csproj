@@ -9,7 +9,7 @@
         <LangVersion>latest</LangVersion>
         <PackageId>ProtoValidate</PackageId>
         <Authors>TELUS</Authors>
-        <Copyright>Copyright 2024 TELUS</Copyright>
+        <Copyright>Copyright 2024-2025 TELUS</Copyright>
         <Description>C# implementation of protovalidate.  Supports ProtoValidate v0.7.1.</Description>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageTags>ProtoValidate</PackageTags>
@@ -17,7 +17,7 @@
         <RepositoryUrl>https://github.com/telus-oss/protovalidate-net</RepositoryUrl>
         <PackageProjectUrl>https://github.com/telus-oss/protovalidate-net</PackageProjectUrl>
         <IsPackable>true</IsPackable>
-        <Version>0.3.4</Version>
+        <Version>0.3.5</Version>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <DebugType>portable</DebugType>
         <IncludeSymbols>true</IncludeSymbols>
@@ -26,7 +26,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cel" Version="0.2.1" />
+        <PackageReference Include="Cel" Version="0.3.1" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
         <PackageReference Include="Google.Protobuf" Version="3.29.3" />
         <PackageReference Include="Grpc.Tools" Version="2.67.0">
