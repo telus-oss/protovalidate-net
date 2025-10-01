@@ -58,13 +58,15 @@ namespace ProtoValidate
             foreach (var violation in Violations)
             {
                 builder.Append("\n - ");
-                if (!string.IsNullOrEmpty(violation.FieldPath))
+                //fix
+                if (!string.IsNullOrEmpty(violation.Field.ToString()))
                 {
-                    builder.Append(violation.FieldPath);
+                    //fix
+                    builder.Append(violation.Field.ToString());
                     builder.Append(": ");
                 }
 
-                builder.Append(string.Format("{0} [{1}]", violation.Message, violation.ConstraintId));
+                builder.Append(string.Format("{0} [{1}]", violation.Message, violation.RuleId));
             }
 
             return builder.ToString();

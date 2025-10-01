@@ -24,25 +24,14 @@ namespace ProtoValidate.Internal
 {
     internal static class FieldConstraintExtensions
     {
-        public static Ignore CalculateIgnore(this FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
+        public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor)
         {
             if (fieldDescriptor == null)
             {
                 throw new ArgumentNullException(nameof(fieldDescriptor));
             }
-#pragma warning disable CS0612 // Type or member is obsolete
-            if (fieldConstraints.Ignore == Ignore.Unspecified)
+            if (fieldRules.Ignore == Ignore.Unspecified)
             {
-                if (fieldConstraints.Skipped)
-                {
-                    return Ignore.Always;
-                }
-
-                if (fieldConstraints.IgnoreEmpty)
-                {
-                    return Ignore.IfUnpopulated;
-                }
-
                 if (fieldDescriptor.HasPresence)
                 {
                     if (fieldDescriptor.ContainingType == null || !fieldDescriptor.ContainingType.IsMapEntry)
@@ -51,17 +40,7 @@ namespace ProtoValidate.Internal
                     }
                 }
             }
-            else if (fieldConstraints.Ignore == Ignore.Empty)
-            {
-                return Ignore.IfUnpopulated;
-            }
-            else if (fieldConstraints.Ignore == Ignore.Default)
-            {
-                return Ignore.IfDefaultValue;
-            }
-
-            return fieldConstraints.Ignore;
-#pragma warning restore CS0612 // Type or member is obsolete
+            return fieldRules.Ignore;
         }
     }
 }

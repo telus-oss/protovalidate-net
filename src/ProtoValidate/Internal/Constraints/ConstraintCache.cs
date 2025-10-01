@@ -21,7 +21,7 @@ using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using ProtoValidate.Exceptions;
 using ProtoValidate.Internal.Cel;
-using FieldConstraints = Buf.Validate.FieldConstraints;
+using FieldRules = Buf.Validate.FieldRules;
 
 namespace ProtoValidate.Internal.Constraints;
 
@@ -46,16 +46,16 @@ public class ConstraintCache
     /// <summary>
     ///     Map for caching descriptor and their expression delegates
     /// </summary>
-    private ConcurrentDictionary<FieldDescriptor, List<CompiledExpression>> DescriptorMap { get; } = new();
+    internal ConcurrentDictionary<FieldDescriptor, List<CompiledExpression>> DescriptorMap { get; } = new();
 
-    private CelEnvironment CelEnvironment { get; }
-    private IList<FieldDescriptor> Extensions { get; }
+    internal CelEnvironment CelEnvironment { get; }
+    internal IList<FieldDescriptor> Extensions { get; }
 
-    public List<CompiledProgram> Compile(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems)
+    public List<CompiledProgram> Compile(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems)
     {
         var compiledProgramList = new List<CompiledProgram>();
 
-        var rulesMessage = ResolveConstraints(fieldDescriptor, fieldConstraints, forItems);
+        var rulesMessage = ResolveConstraints(fieldDescriptor, fieldRules, forItems);
         if (rulesMessage == null)
         {
             // Message null means there were no constraints resolved.
@@ -74,15 +74,13 @@ public class ConstraintCache
                     continue;
                 }
 
-                // var constraints = options.GetExtension(ValidateExtensions.Predefined);
-                //
-                // if (constraints == null)
-                // {
-                //     constraints = new PredefinedConstraints();
-                // }
-                //var constraints = new PredefinedConstraints();
-                //fix this - pulled from fieldConstraints.Cel
-                var expressions = Expression.FromConstraints(fieldConstraints.Cel).ToList();
+                var rules = options.GetExtension(ValidateExtensions.Predefined);
+                
+                if (rules == null)
+                {
+                    rules = new PredefinedRules();
+                }
+                var expressions = Expression.FromRules(rules.Cel).ToList();
 
                 var compiledPrograms = new List<CompiledExpression>();
 
@@ -104,11 +102,11 @@ public class ConstraintCache
         foreach (var extensionFieldDescriptor in Extensions.Where(c => c.IsExtension && c.ExtendeeType.ClrType == ruleType))
         {
             var extensionOptions = extensionFieldDescriptor.GetOptions();
-            // var predefinedConstraints = extensionOptions.GetExtension(ValidateExtensions.Predefined);
-            // if (predefinedConstraints == null)
-            // {
-            //     continue;
-            // }
+            var predefinedRules = extensionOptions.GetExtension(ValidateExtensions.Predefined);
+            if (predefinedRules == null)
+            {
+                continue;
+            }
 
             var extension = extensionFieldDescriptor.Extension;
             var extensionType = extension.GetType();
@@ -163,10 +161,8 @@ public class ConstraintCache
                 extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
             }
 
-            //FIX
-            //var expressions = Expression.FromConstraints(predefinedConstraints.Cel).ToList();
-            var expressions = Expression.FromConstraints(fieldConstraints.Cel).ToList();
-
+            var expressions = Expression.FromRules(predefinedRules.Cel).ToList();
+            
             foreach (var expression in expressions)
             {
                 var celExpression = CelEnvironment.Compile(expression.ExpressionText);
@@ -222,16 +218,16 @@ public class ConstraintCache
         return compiledProgramList;
     }
 
-    private IMessage? ResolveConstraints(FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints, bool forItems)
+    internal IMessage? ResolveConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems)
     {
-        var fieldOneofs = FieldConstraints.Descriptor.Oneofs;
+        var fieldOneofs = FieldRules.Descriptor.Oneofs;
         if (fieldOneofs == null || fieldOneofs.Count == 0)
         {
             // If the oneof field descriptor is null there are no constraints to resolve.
             return null;
         }
 
-        var oneofFieldDescriptor = fieldOneofs[0].Accessor.GetCaseFieldDescriptor(fieldConstraints);
+        var oneofFieldDescriptor = fieldOneofs[0].Accessor.GetCaseFieldDescriptor(fieldRules);
         if (oneofFieldDescriptor == null)
         {
             return null;
@@ -252,13 +248,13 @@ public class ConstraintCache
             throw new CompilationException($"Expected constraint '{expectedConstraintDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
         }
 
-        var typedFieldConstraints = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldConstraints);
+        var typedFieldRules = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldRules);
 
 
-        return typedFieldConstraints;
+        return typedFieldRules;
     }
 
-    private class CompiledExpression
+    internal class CompiledExpression
     {
         public CompiledExpression(Expression source, CelProgramDelegate celProgramDelegate)
         {

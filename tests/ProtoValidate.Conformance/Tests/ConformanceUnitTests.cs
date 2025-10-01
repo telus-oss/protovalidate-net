@@ -111,24 +111,30 @@ public class ConformanceUnitTests
 #if DEBUG
         if (!testCase.ExpectedResult.Success || !testResults.Success)
         {
+            if (testCase.CaseResult != null)
+            {
+                var testCaseJson = Google.Protobuf.JsonFormatter.Default.Format(testCase.CaseResult);
+                Console.WriteLine(testCaseJson);
+            }
+
             if (testCase.ExpectedResult.ValidationError != null
                 && testResults.ValidationError != null
                 && testCase.ExpectedResult.ValidationError.Violations_.Count != testResults.ValidationError.Violations_.Count)
             {
                 foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_)
                 {
-                    if (!testResults.ValidationError.Violations_.Any(c => c.ConstraintId == violation.ConstraintId))
+                    if (!testResults.ValidationError.Violations_.Any(c => c.RuleId == violation.RuleId))
                     {
-                        Console.WriteLine($"Expected violation {violation.ConstraintId} but was not validated.");
+                        Console.WriteLine($"Expected violation {violation.RuleId} but was not validated.");
                         Console.WriteLine();
                     }
                 }
 
                 foreach (var violation in testResults.ValidationError.Violations_)
                 {
-                    if (!testCase.ExpectedResult.ValidationError.Violations_.Any(c => c.ConstraintId == violation.ConstraintId))
+                    if (!testCase.ExpectedResult.ValidationError.Violations_.Any(c => c.RuleId == violation.RuleId))
                     {
-                        Console.WriteLine($"Got violation {violation.ConstraintId} but was not expected.");
+                        Console.WriteLine($"Got violation {violation.RuleId} but was not expected.");
                         Console.WriteLine();
                     }
                 }
@@ -154,9 +160,10 @@ public class ConformanceUnitTests
             Console.WriteLine("Expected");
             if (testCase.ExpectedResult.ValidationError != null)
             {
-                foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_.OrderBy(c => c.ConstraintId).ThenBy(c => c.FieldPath))
+                //fix the sorting
+                foreach (var violation in testCase.ExpectedResult.ValidationError.Violations_.OrderBy(c => c.RuleId))
                 {
-                    Console.WriteLine("{0} {1} {2}", violation.ConstraintId, violation.ForKey, violation.FieldPath);
+                    Console.WriteLine("{0} {1}", violation.RuleId, violation.ForKey);
                     Console.WriteLine(violation.Message);
                     Console.WriteLine();
                 }
@@ -165,7 +172,8 @@ public class ConformanceUnitTests
             Console.WriteLine("Actual");
             if (testResults.ValidationError != null)
             {
-                foreach (var violation in testResults.ValidationError.Violations_.OrderBy(c => c.ConstraintId).ThenBy(c => c.FieldPath))
+                //fix the sorting
+                foreach (var violation in testResults.ValidationError.Violations_.OrderBy(c => c.RuleId))
                 {
                     Console.WriteLine(violation);
                     Console.WriteLine(violation.Value);

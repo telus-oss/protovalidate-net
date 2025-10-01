@@ -24,12 +24,12 @@ public class ConformanceUnitTestParser
         // these tests are excluded because the test cases are exported from buf with a specific date time at time of export
         // and they fail after a time, so we can exclude them from our regular unit tests
         // but when we validate for conformance, it will test them
-        ("standard_constraints/well_known_types/timestamp", "gt_now/valid"),
-        ("standard_constraints/well_known_types/timestamp", "gt_now/within/invalid/within"),
-        ("standard_constraints/well_known_types/timestamp", "gt_now/within/valid"),
-        ("standard_constraints/well_known_types/timestamp", "lt_now/invalid"),
-        ("standard_constraints/well_known_types/timestamp", "lt_now/within/valid"),
-        ("standard_constraints/well_known_types/timestamp", "within/valid"),
+        ("standard_rules/well_known_types/timestamp", "gt_now/valid"),
+        ("standard_rules/well_known_types/timestamp", "gt_now/within/invalid/within"),
+        ("standard_rules/well_known_types/timestamp", "gt_now/within/valid"),
+        ("standard_rules/well_known_types/timestamp", "lt_now/invalid"),
+        ("standard_rules/well_known_types/timestamp", "lt_now/within/valid"),
+        ("standard_rules/well_known_types/timestamp", "within/valid"),
     };
 
     public static ConformanceUnitTestCase[] GetTestCases()
@@ -57,7 +57,7 @@ public class ConformanceUnitTestParser
                     var testName = !string.IsNullOrWhiteSpace(test.Name) ? test.Name : "Test " + (j + 1);
 
 
-                    var testCase = new ConformanceUnitTestCase(suiteName, testName, test.Wanted, test.Input);
+                    var testCase = new ConformanceUnitTestCase(suiteName, testName, test.Wanted, test.Input, test);
 
                     if (ExcludedTests.Any(c => string.Equals(c.Suite, suiteName, StringComparison.Ordinal) && string.Equals(c.Name, testName, StringComparison.Ordinal)))
                     {

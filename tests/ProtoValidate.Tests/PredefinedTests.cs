@@ -8,7 +8,6 @@ using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using ProtoValidate.Internal.Constraints;
 using Type = Google.Protobuf.WellKnownTypes.Type;
 
 namespace ProtoValidate.Tests;
@@ -314,7 +313,7 @@ public class PredefinedMessageTest
         var typedFieldConstraints = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldConstraints);
 
 
-        var predefinedConstraints = GetPredefinedConstraints(extensions, typedFieldConstraints);
+        var predefinedConstraints = GetPredefinedRules(extensions, typedFieldConstraints);
 
         //
         // foreach (var extensionFieldDescriptor in extensions)
@@ -368,9 +367,9 @@ public class PredefinedMessageTest
 
     }
 
-    private List<Tuple<PredefinedConstraints, object?>> GetPredefinedConstraints(IList<FieldDescriptor> extensions, IMessage typedFieldConstraints)
+    private List<Tuple<PredefinedRules, object?>> GetPredefinedRules(IList<FieldDescriptor> extensions, IMessage typedFieldConstraints)
     {
-        var results = new List<Tuple<PredefinedConstraints, object?>>();
+        var results = new List<Tuple<PredefinedRules, object?>>();
 
         var constraintType = typedFieldConstraints.GetType();
 
@@ -385,8 +384,8 @@ public class PredefinedMessageTest
             }
 
             var extensionOptions = extensionFieldDescriptor.GetOptions();
-            var predefinedConstraints = extensionOptions.GetExtension(ValidateExtensions.Predefined);
-            if (predefinedConstraints == null)
+            var predefinedRules = extensionOptions.GetExtension(ValidateExtensions.Predefined);
+            if (predefinedRules == null)
             {
                 continue;
             }
@@ -421,7 +420,7 @@ public class PredefinedMessageTest
             var genericGetExtensionValueMethod = getExtensionValueMethod.MakeGenericMethod(extensionValueType);
 
             var extensionValue = genericGetExtensionValueMethod.Invoke(typedFieldConstraints, new object?[] { extension });
-            results.Add(new Tuple<PredefinedConstraints, object?>(predefinedConstraints, extensionValue));
+            results.Add(new Tuple<PredefinedRules, object?>(predefinedRules, extensionValue));
         }
 
         return results;

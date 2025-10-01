@@ -19,9 +19,9 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class AnyEvaluator : IEvaluator
 {
-    private FieldDescriptor TypeUrlDescriptor { get; }
-    private Dictionary<string, object?>? InLookup { get; }
-    private Dictionary<string, object?>? NotInLookup { get; }
+    internal FieldDescriptor TypeUrlDescriptor { get; }
+    internal Dictionary<string, object?>? InLookup { get; }
+    internal Dictionary<string, object?>? NotInLookup { get; }
 
     public AnyEvaluator(FieldDescriptor typeUrlDescriptor, IList<string>? inList, IList<string>? notInList)
     {
@@ -62,7 +62,7 @@ public class AnyEvaluator : IEvaluator
         {
             var violation = new Violation
             {
-                ConstraintId = "any.in",
+                RuleId = "any.in",
                 Message = "Type url must be in the allow list."
             };
 
@@ -77,7 +77,7 @@ public class AnyEvaluator : IEvaluator
         {
             var violation = new Violation
             {
-                ConstraintId = "any.not_in",
+                RuleId = "any.not_in",
                 Message = "Type url must not be in the block list."
             };
 

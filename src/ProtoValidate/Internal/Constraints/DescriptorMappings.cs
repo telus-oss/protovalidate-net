@@ -19,25 +19,25 @@ namespace ProtoValidate.Internal.Constraints;
 
 public class DescriptorMappings
 {
-    // Provides a {@link Descriptor} for {@link FieldConstraints}.
-    private static MessageDescriptor FIELD_CONSTRAINTS_DESC { get; } = FieldConstraints.Descriptor;
+    // Provides a {@link Descriptor} for {@link FieldRules}.
+    internal static MessageDescriptor FIELD_CONSTRAINTS_DESC { get; } = FieldRules.Descriptor;
 
-    // Provides the {@link OneofDescriptor} for the type union in {@link FieldConstraints}.
+    // Provides the {@link OneofDescriptor} for the type union in {@link FieldRules}.
     internal static OneofDescriptor FIELD_CONSTRAINTS_ONEOF_DESC { get; } = FIELD_CONSTRAINTS_DESC.Oneofs[0];
 
     // Provides the {@link FieldDescriptor} for the map standard constraints.
-    private static FieldDescriptor MAP_FIELD_CONSTRAINTS_DESC { get; } = FIELD_CONSTRAINTS_DESC.FindFieldByName("map");
+    internal static FieldDescriptor MAP_FIELD_CONSTRAINTS_DESC { get; } = FIELD_CONSTRAINTS_DESC.FindFieldByName("map");
 
     // Provides the {@link FieldDescriptor} for the repeated standard constraints.
-    private static FieldDescriptor REPEATED_FIELD_CONSTRAINTS_DESC { get; } = FIELD_CONSTRAINTS_DESC.FindFieldByName("repeated");
+    internal static FieldDescriptor REPEATED_FIELD_CONSTRAINTS_DESC { get; } = FIELD_CONSTRAINTS_DESC.FindFieldByName("repeated");
 
     // Maps protocol buffer field kinds to their expected field constraints.
-    private static Dictionary<FieldType, FieldDescriptor> EXPECTED_STANDARD_CONSTRAINTS { get; } = new();
+    internal static Dictionary<FieldType, FieldDescriptor> EXPECTED_STANDARD_CONSTRAINTS { get; } = new();
 
-    // Returns the {@link build.buf.validate.FieldConstraints} field that is expected for the given
+    // Returns the {@link build.buf.validate.FieldRules} field that is expected for the given
     // wrapper well-known type's full name. If ok is false, no standard constraints exist for that
     // type.   
-    private static Dictionary<string, FieldDescriptor> EXPECTED_WKT_CONSTRAINTS { get; } = new();
+    internal static Dictionary<string, FieldDescriptor> EXPECTED_WKT_CONSTRAINTS { get; } = new();
 
     static DescriptorMappings()
     {
@@ -64,7 +64,7 @@ public class DescriptorMappings
 
 
     /**
-   * Returns the {@link FieldConstraints} field that is expected for the given protocol buffer field
+   * Returns the {@link FieldRules} field that is expected for the given protocol buffer field
    * kind.
    */
     public static FieldDescriptor? ExpectedWrapperConstraints(string fqn)

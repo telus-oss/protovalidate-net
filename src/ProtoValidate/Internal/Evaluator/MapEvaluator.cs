@@ -19,11 +19,11 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class MapEvaluator : IEvaluator
 {
-    public MapEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor)
+    public MapEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor)
     {
-        if (fieldConstraints == null)
+        if (fieldRules == null)
         {
-            throw new ArgumentNullException(nameof(fieldConstraints));
+            throw new ArgumentNullException(nameof(fieldRules));
         }
 
         if (fieldDescriptor == null)
@@ -31,24 +31,24 @@ public class MapEvaluator : IEvaluator
             throw new ArgumentNullException(nameof(fieldDescriptor));
         }
 
-        FieldConstraints = fieldConstraints;
+        FieldRules = fieldRules;
         FieldDescriptor = fieldDescriptor;
 
-        var mapRules = fieldConstraints.Map;
+        var mapRules = fieldRules.Map;
         var keyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
         var valueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
 
-        var mapRulesKeysFieldConstraints = mapRules?.Keys ?? new FieldConstraints();
-        var mapRulesValuesFieldConstraints = mapRules?.Values ?? new FieldConstraints();
+        var mapRulesKeysFieldRules = mapRules?.Keys ?? new FieldRules();
+        var mapRulesValuesFieldRules = mapRules?.Values ?? new FieldRules();
 
-        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldConstraints, keyDescriptor, mapRulesKeysFieldConstraints.CalculateIgnore(keyDescriptor));
-        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldConstraints, valueDescriptor, mapRulesValuesFieldConstraints.CalculateIgnore(valueDescriptor));
+        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldRules, keyDescriptor, mapRulesKeysFieldRules.CalculateIgnore(keyDescriptor));
+        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldRules, valueDescriptor, mapRulesValuesFieldRules.CalculateIgnore(valueDescriptor));
     }
 
     public ValueEvaluator KeyEvaluator { get; }
     public ValueEvaluator ValueEvaluator { get; }
     public FieldDescriptor FieldDescriptor { get; }
-    public FieldConstraints FieldConstraints { get; }
+    public FieldRules FieldRules { get; }
 
     public bool Tautology => KeyEvaluator.Tautology && ValueEvaluator.Tautology;
 
@@ -84,7 +84,7 @@ public class MapEvaluator : IEvaluator
         return $"Map Evaluator {FieldDescriptor.FullName}";
     }
 
-    private List<Violation> EvalPairs(IValue key, IValue value, bool failFast)
+    internal List<Violation> EvalPairs(IValue key, IValue value, bool failFast)
     {
         var keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
         List<Violation> valueViolations;

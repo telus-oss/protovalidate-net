@@ -47,9 +47,9 @@ public class Validator : IValidator
         Options = optionsAccessor.Value;
         Initialize();
     }
-    private ValidatorOptions Options { get; }
+    internal ValidatorOptions Options { get; }
 
-    private EvaluatorBuilder? EvaluatorBuilder { get; set; }
+    internal EvaluatorBuilder? EvaluatorBuilder { get; set; }
 
     public ValidationResult Validate(IMessage message, bool failFast)
     {
@@ -78,7 +78,7 @@ public class Validator : IValidator
         return GetEvaluatorDebugString(evaluator, 0, new List<IEvaluator>());
     }
 
-    private void Initialize()
+    internal void Initialize()
     {
         var fileDescriptorList = Options.FileDescriptors ?? new List<FileDescriptor>();
 
@@ -131,7 +131,7 @@ public class Validator : IValidator
         }
     }
 
-    private string GetEvaluatorDebugString(IEvaluator evaluator, int nestLevel, List<IEvaluator> visitedEvaluators)
+    internal string GetEvaluatorDebugString(IEvaluator evaluator, int nestLevel, List<IEvaluator> visitedEvaluators)
     {
         if (visitedEvaluators.Contains(evaluator))
         {

@@ -23,28 +23,31 @@ public static class ErrorPathUtils
     {
         var prefix = string.Format(CultureInfo.InvariantCulture, format, args);
         return violations.Select(c =>
-                                 {
-                                     var fieldPath = c.FieldPath;
-                                     var prefixedFieldPath = "";
-                                     if (string.IsNullOrEmpty(fieldPath))
-                                     {
-                                         prefixedFieldPath = prefix;
-                                     }
-                                     else if (fieldPath.StartsWith("[", StringComparison.Ordinal))
-                                     {
-                                         prefixedFieldPath = prefix + fieldPath;
-                                     }
-                                     else
-                                     {
-                                         prefixedFieldPath = string.Format(CultureInfo.InvariantCulture, "{0}.{1}", prefix, fieldPath);
-                                     }
+            {
+                var field = c.Field;
+                var fieldPath = string.Join(".", field.Elements);
 
-                                     var violation = c.Clone();
-                                     violation.FieldPath = prefixedFieldPath;
-                                     violation.Value = c.Value;
+                var prefixedFieldPath = "";
+                if (string.IsNullOrEmpty(fieldPath))
+                {
+                    prefixedFieldPath = prefix;
+                }
+                else if (fieldPath.StartsWith("[", StringComparison.Ordinal))
+                {
+                    prefixedFieldPath = prefix + fieldPath;
+                }
+                else
+                {
+                    prefixedFieldPath = string.Format(CultureInfo.InvariantCulture, "{0}.{1}", prefix, fieldPath);
+                }
 
-                                     return violation;
-                                 }
+                var violation = c.Clone();
+                violation.Field = new FieldPath();
+                //violation.Field.Elements.AddRange(prefixedFieldPath.Split(".").Select(d => new FieldPathElement() { FieldName = d }));
+                violation.Value = c.Value;
+
+                return violation;
+            }
                                 ).ToList();
     }
 }
