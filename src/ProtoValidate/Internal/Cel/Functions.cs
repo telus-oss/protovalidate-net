@@ -706,9 +706,35 @@ public static class Functions
         {
             return false;
         }
+        
+        // URIs starting with "//" are relative references, not absolute URIs
+        if (uriString.StartsWith("//"))
+        {
+            return false;
+        }
 
         try
         {
+            const string regexPattern = @"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?";
+
+            var match = Regex.Match(uriString, regexPattern);
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            var scheme = match.Groups.Count >= 3 ? match.Groups[2].Value : string.Empty;
+            var authority = match.Groups.Count >= 5 ? match.Groups[4].Value : string.Empty;
+            var path = match.Groups.Count >= 6 ? match.Groups[5].Value : string.Empty;
+            var query = match.Groups.Count >= 8 ? match.Groups[7].Value : string.Empty;
+            var fragment = match.Groups.Count >= 10 ? match.Groups[9].Value : string.Empty;
+
+            // Absolute URIs must have a scheme
+            if (string.IsNullOrEmpty(scheme))
+            {
+                return false;
+            }
+
             // Check for Unicode characters first - RFC 3986 requires ASCII only
             if (ContainsNonAsciiCharacters(uriString))
             {
@@ -733,43 +759,52 @@ public static class Functions
                 return false;
             }
 
-            // Check scheme validity first
-            var colonIndex = uriString.IndexOf(':');
-            if (colonIndex <= 0)
-            {
-                return false;
-            }
-
-            var scheme = uriString.Substring(0, colonIndex);
+            // Validate scheme
             if (!IsValidScheme(scheme))
             {
                 return false;
             }
 
-            // URIs starting with "//" are relative references, not absolute URIs
-            if (uriString.StartsWith("//"))
+            // Validate authority if present (authority is present if we have "//")
+            var hasAuthority = match.Groups.Count >= 4 && match.Groups[3].Value.StartsWith("//");
+            if (hasAuthority)
             {
-                return false;
+                if (!ValidateAuthority(authority))
+                {
+                    return false;
+                }
             }
 
-            // Parse the URI manually to validate specific components
-            var afterScheme = uriString.Substring(colonIndex + 1);
-
-            // For authority-based schemes (starting with //)
-            if (afterScheme.StartsWith("//"))
+            // Validate path component
+            if (!string.IsNullOrEmpty(path))
             {
-                return ValidateAuthorityBasedUri(uriString, afterScheme.Substring(2));
+                if (!ValidateUriComponent(path, false)) // path doesn't allow '?' or '#'
+                {
+                    return false;
+                }
             }
 
-            // For non-authority schemes, just do basic validation
-            // First, try with the standard .NET parser
-            if (Uri.TryCreate(uriString, UriKind.Absolute, out var uri) && uri != null && !string.IsNullOrEmpty(uri.Scheme))
+            // Validate query component
+            if (!string.IsNullOrEmpty(query))
             {
-                // Even if .NET accepts it, we need to check for strict RFC 3986 compliance
-                return IsStrictlyRfc3986Compliant(uriString, uri);
+                if (!ValidateUriComponent(query, true)) // query allows most characters
+                {
+                    return false;
+                }
             }
 
-            return false;
+            // Validate fragment component
+            if (!string.IsNullOrEmpty(fragment))
+            {
+                if (!ValidateUriComponent(fragment, true)) // fragment allows most characters
+                {
+                    return false;
+                }
+            }
+
+            // If all our manual checks pass, the URI is valid according to RFC 3986
+            // We don't need to rely on .NET's parser since it's more restrictive
+            return true;
         }
         catch
         {
@@ -902,35 +937,35 @@ public static class Functions
     {
         // Characters that are not allowed unescaped in URIs according to RFC 3986
         // These are characters outside the "unreserved" and "reserved" sets that .NET might accept
-        var invalidChars = new[] { '^', '`', '{', '}', '|', '\\', '"' , '<', '>', ' ', '\t', '\r', '\n' };
-        
+        var invalidChars = new[] { '^', '`', '{', '}', '|', '\\', '"', '<', '>', ' ', '\t', '\r', '\n' };
+
         for (var i = 0; i < uriString.Length; i++)
         {
             var c = uriString[i];
-            
+
             // Check for obviously invalid characters
             if (invalidChars.Contains(c))
             {
                 return true;
             }
-            
+
             // Check for control characters (ASCII 0-31 except allowed ones)
             if (c < 32 && c != '\t') // Most control characters are invalid
             {
                 return true;
             }
-            
+
             // Check for Unicode escape sequences like \u001f
-            if (c == '\\' && i + 5 < uriString.Length && 
+            if (c == '\\' && i + 5 < uriString.Length &&
                 uriString[i + 1] == 'u' &&
-                IsHexDigit(uriString[i + 2]) && IsHexDigit(uriString[i + 3]) && 
+                IsHexDigit(uriString[i + 2]) && IsHexDigit(uriString[i + 3]) &&
                 IsHexDigit(uriString[i + 4]) && IsHexDigit(uriString[i + 5]))
             {
                 // This looks like a Unicode escape sequence, which should not appear in URIs
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -1117,7 +1152,13 @@ public static class Functions
             }
 
             host = hostPort.Substring(1, closeBracket - 1);
-            
+
+            // Validate IPv6 address
+            if (!ValidateIPv6Host(host))
+            {
+                return false;
+            }
+
             // Check for port after closing bracket
             if (closeBracket < hostPort.Length - 1)
             {
@@ -1129,12 +1170,6 @@ public static class Functions
                 {
                     port = hostPort.Substring(closeBracket + 2);
                 }
-            }
-
-            // Validate IPv6 address
-            if (!ValidateIPv6Literal(host))
-            {
-                return false;
             }
         }
         else
@@ -1156,13 +1191,10 @@ public static class Functions
                 host = hostPort;
             }
 
-            // Validate host (can be hostname or IPv4)
-            if (!string.IsNullOrEmpty(host))
+            // Validate host (can be hostname or IPv4) - allow empty host
+            if (!ValidateHost(host))
             {
-                if (!ValidateHost(host))
-                {
-                    return false;
-                }
+                return false;
             }
         }
 
@@ -1179,103 +1211,38 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates a host component (hostname or IPv4 address)
+    /// Validates userinfo component
     /// </summary>
-    private static bool ValidateHost(string host)
+    private static bool ValidateUserInfo(string userInfo)
     {
-        if (string.IsNullOrEmpty(host))
-        {
-            return true; // Empty host is valid
-        }
-
-        // Check for invalid characters first
-        foreach (var c in host)
-        {
-            // RFC 3986: host = IP-literal / IPv4address / reg-name
-            // reg-name = *( unreserved / pct-encoded / sub-delims )
-            // unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
-            // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-            
-            if (!char.IsLetterOrDigit(c) && 
-                c != '-' && c != '.' && c != '_' && c != '~' &&
-                c != '!' && c != '$' && c != '&' && c != '\'' && 
-                c != '(' && c != ')' && c != '*' && c != '+' && 
-                c != ',' && c != ';' && c != '=' && c != '%')
-            {
-                return false;
-            }
-        }
-
-        // Try as IPv4 first
-        if (TryParseStrictIPv4(host, out _))
+        // Empty userinfo is valid (like in "https://@example.com")
+        if (string.IsNullOrEmpty(userInfo))
         {
             return true;
         }
 
-        // Try as hostname
-        return IsHostname(host);
-    }
-
-    /// <summary>
-    /// Validates an IPv6 literal (content inside [])
-    /// </summary>
-    private static bool ValidateIPv6Literal(string ipv6Literal)
-    {
-        if (string.IsNullOrEmpty(ipv6Literal))
+        // userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
+        // RFC 3986 allows all sub-delims including "?" in userinfo
+        for (var i = 0; i < userInfo.Length; i++)
         {
-            return false;
-        }
+            var c = userInfo[i];
 
-        // Check for IPvFuture format
-        if (ipv6Literal.StartsWith("v"))
-        {
-            var dotIndex = ipv6Literal.IndexOf('.');
-            if (dotIndex <= 1) // Must have version and dot
+            if (c == '%')
             {
-                return false;
-            }
-
-            var version = ipv6Literal.Substring(1, dotIndex - 1);
-            
-            // Version must be hex digits only
-            foreach (var c in version)
-            {
-                if (!IsHexDigit(c))
+                // Must be followed by two hex digits
+                if (i + 2 >= userInfo.Length ||
+                    !IsHexDigit(userInfo[i + 1]) ||
+                    !IsHexDigit(userInfo[i + 2]))
                 {
                     return false;
                 }
+                i += 2;
             }
-
-            // Rest must be valid according to IPvFuture grammar
-            var afterDot = ipv6Literal.Substring(dotIndex + 1);
-            return ValidateIPvFutureContent(afterDot);
-        }
-
-        // Regular IPv6 address - try parsing with our strict parser
-        return TryParseStrictIpv6(ipv6Literal, out _, out _);
-    }
-
-    /// <summary>
-    /// Validates IPvFuture content after the version.
-    /// </summary>
-    private static bool ValidateIPvFutureContent(string content)
-    {
-        if (string.IsNullOrEmpty(content))
-        {
-            return false;
-        }
-
-        // IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-        // unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
-        // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-        
-        foreach (var c in content)
-        {
-            if (!char.IsLetterOrDigit(c) && 
-                c != '-' && c != '.' && c != '_' && c != '~' &&
-                c != '!' && c != '$' && c != '&' && c != '\'' && 
-                c != '(' && c != ')' && c != '*' && c != '+' && 
-                c != ',' && c != ';' && c != '=' && c != ':')
+            else if (!char.IsLetterOrDigit(c) &&
+                     c != '-' && c != '.' && c != '_' && c != '~' &&
+                     c != '!' && c != '$' && c != '&' && c != '\'' &&
+                     c != '(' && c != ')' && c != '*' && c != '+' &&
+                     c != ',' && c != ';' && c != '=' && c != ':' && c != '?' && c != '#')
             {
                 return false;
             }
@@ -1285,35 +1252,149 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates userinfo component
+    /// Validates an IPv6 host component
     /// </summary>
-    private static bool ValidateUserInfo(string userInfo)
+    private static bool ValidateIPv6Host(string host)
     {
-        if (string.IsNullOrEmpty(userInfo))
+        if (string.IsNullOrEmpty(host))
+        {
+            return false; // IPv6 literal cannot be empty
+        }
+
+        // Check for zone ID (scope ID) indicated by %
+        var percentIndex = host.IndexOf('%');
+        var ipPart = percentIndex >= 0 ? host.Substring(0, percentIndex) : host;
+        var zoneId = percentIndex >= 0 ? host.Substring(percentIndex + 1) : null;
+
+        // For IPv6 literals, we use our strict parsing method
+        if (!TryParseStrictIpv6(ipPart, out _, out _))
+        {
+            // If it doesn't parse as IPv6, check if it's a valid IPv6 future literal
+            // IPv6 future format: v<HEXDIG>+.<unreserved / sub-delims / ":" / "/">
+            if (host.StartsWith("v") && host.Length > 1)
+            {
+                var dotIndex = host.IndexOf('.');
+                if (dotIndex > 1)
+                {
+                    var versionPart = host.Substring(1, dotIndex - 1);
+                    var addressPart = host.Substring(dotIndex + 1);
+
+                    // Version part must be all hex digits
+                    foreach (var c in versionPart)
+                    {
+                        if (!IsHexDigit(c))
+                        {
+                            return false;
+                        }
+                    }
+
+                    // Address part can contain unreserved / sub-delims / ":" / "/"
+                    foreach (var c in addressPart)
+                    {
+                        if (!char.IsLetterOrDigit(c) &&
+                            c != '-' && c != '.' && c != '_' && c != '~' &&
+                            c != '!' && c != '$' && c != '&' && c != '\'' &&
+                            c != '(' && c != ')' && c != '*' && c != '+' &&
+                            c != ',' && c != ';' && c != '=' && c != ':' && c != '/')
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Validate zone ID if present
+        if (zoneId != null)
+        {
+            if (string.IsNullOrEmpty(zoneId))
+            {
+                return false;
+            }
+
+            // Validate percent encoding in zone ID
+            if (zoneId.Contains("%") && !IsValidZoneIdPercentEncoding(zoneId))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates a host component (hostname or IPv4 address)
+    /// </summary>
+    private static bool ValidateHost(string host)
+    {
+        // Empty host is valid in some contexts (like "https://:8080")
+        if (string.IsNullOrEmpty(host))
         {
             return true;
         }
 
-        // userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
-        for (var i = 0; i < userInfo.Length; i++)
+        // Check for invalid characters first
+        foreach (var c in host)
         {
-            var c = userInfo[i];
-            
+            // RFC 3986: host = IP-literal / IPv4address / reg-name
+            // reg-name = *( unreserved / pct-encoded / sub-delims )
+            // unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+            // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+
+            if (!char.IsLetterOrDigit(c) &&
+                c != '-' && c != '.' && c != '_' && c != '~' &&
+                c != '!' && c != '$' && c != '&' && c != '\'' &&
+                c != '(' && c != ')' && c != '*' && c != '+' &&
+                c != ',' && c != ';' && c != '=' && c != '%')
+            {
+                return false;
+            }
+        }
+
+        // Try as IPv4 first - if it fails, treat as hostname
+        if (TryParseStrictIPv4(host, out _))
+        {
+            return true;
+        }
+
+        // If it looks like IPv4 but fails strict parsing, treat as hostname anyway
+        // This handles cases like "256.0.0.1" which should be valid hostnames
+        return IsHostname(host) || IsValidRegName(host);
+    }
+
+    /// <summary>
+    /// Validates a reg-name according to RFC 3986 (more permissive than hostname)
+    /// </summary>
+    private static bool IsValidRegName(string regName)
+    {
+        if (string.IsNullOrEmpty(regName))
+        {
+            return true;
+        }
+
+        // reg-name can contain any unreserved / pct-encoded / sub-delims characters
+        // This is more permissive than hostname rules
+        for (var i = 0; i < regName.Length; i++)
+        {
+            var c = regName[i];
+
             if (c == '%')
             {
                 // Must be followed by two hex digits
-                if (i + 2 >= userInfo.Length || 
-                    !IsHexDigit(userInfo[i + 1]) || 
-                    !IsHexDigit(userInfo[i + 2]))
+                if (i + 2 >= regName.Length ||
+                    !IsHexDigit(regName[i + 1]) ||
+                    !IsHexDigit(regName[i + 2]))
                 {
                     return false;
                 }
                 i += 2;
             }
-            else if (!char.IsLetterOrDigit(c) && 
+            else if (!char.IsLetterOrDigit(c) &&
                      c != '-' && c != '.' && c != '_' && c != '~' &&
-                     c != '!' && c != '$' && c != '&' && c != '\'' && 
-                     c != '(' && c != ')' && c != '*' && c != '+' && 
+                     c != '!' && c != '$' && c != '&' && c != '\'' &&
+                     c != '(' && c != ')' && c != '*' && c != '+' &&
                      c != ',' && c != ';' && c != '=' && c != ':')
             {
                 return false;
@@ -1330,7 +1411,7 @@ public static class Functions
     {
         if (string.IsNullOrEmpty(port))
         {
-            return false;
+            return true; // Empty port is valid in authority (just the colon)
         }
 
         // Port must be all digits
@@ -1364,12 +1445,12 @@ public static class Functions
         for (var i = 0; i < component.Length; i++)
         {
             var c = component[i];
-            
+
             if (c == '%')
             {
                 // Must be followed by two hex digits
-                if (i + 2 >= component.Length || 
-                    !IsHexDigit(component[i + 1]) || 
+                if (i + 2 >= component.Length ||
+                    !IsHexDigit(component[i + 1]) ||
                     !IsHexDigit(component[i + 2]))
                 {
                     return false;
@@ -1397,9 +1478,9 @@ public static class Functions
         }
 
         // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-        if (c == '!' || c == '$' || c == '&' || c == '\'' || 
-            c == '(' || c == ')' || c == '*' || c == '+' || 
-            c == ',' || c == ';' || c == '=')
+        if (c == '!' || c == '$' || c == '&' || c == '\'' ||
+            c == '(' || c == ')' || c == '*' || c == '+' ||
+            c == ',' || c == ';' || c == '=' )
         {
             return true;
         }
