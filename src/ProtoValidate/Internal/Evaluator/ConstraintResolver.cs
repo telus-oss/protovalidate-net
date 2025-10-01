@@ -92,16 +92,16 @@ public class ConstraintResolver
                 fieldConstraints.Ignore = Ignore.IfUnpopulated;
             }
 
-            if (fieldConstraints.HasIgnoreEmpty && fieldConstraints.IgnoreEmpty)
-
-            {
-                fieldConstraints.Ignore = Ignore.IfUnpopulated;
-            }
-
-            if (fieldConstraints.HasSkipped && fieldConstraints.Skipped)
-            {
-                fieldConstraints.Ignore = Ignore.Always;
-            }
+            // if (fieldConstraints.HasIgnoreEmpty && fieldConstraints.IgnoreEmpty)
+            //
+            // {
+            //     fieldConstraints.Ignore = Ignore.IfUnpopulated;
+            // }
+            //
+            // if (fieldConstraints.HasSkipped && fieldConstraints.Skipped)
+            // {
+            //     fieldConstraints.Ignore = Ignore.Always;
+            // }
         }
         else if (fieldConstraints.Ignore == Ignore.Empty)
         {
@@ -116,15 +116,15 @@ public class ConstraintResolver
         return fieldConstraints;
     }
 
-    public PredefinedConstraints ResolvePredefinedConstraints(FieldDescriptor descriptor)
-    {
-        var options = descriptor.GetOptions();
-        if (options == null || !options.HasExtension(ValidateExtensions.Predefined))
-        {
-            return new PredefinedConstraints();
-        }
-
-        var predefinedConstraints = options.GetExtension(ValidateExtensions.Predefined);
-        return predefinedConstraints;
-    }
+    // public PredefinedConstraints ResolvePredefinedConstraints(FieldDescriptor descriptor)
+    // {
+    //     var options = descriptor.GetOptions();
+    //     if (options == null || !options.HasExtension(ValidateExtensions.Predefined))
+    //     {
+    //         return new PredefinedConstraints();
+    //     }
+    //
+    //     var predefinedConstraints = options.GetExtension(ValidateExtensions.Predefined);
+    //     return predefinedConstraints;
+    // }
 }

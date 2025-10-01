@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0;net7.0;net6.0;net48</TargetFrameworks>
+        <TargetFrameworks>net8.0;net48</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <StartupObject>ProtoValidate.Conformance.Program</StartupObject>
@@ -20,10 +20,10 @@
         <EmbeddedResource Include="Tests\Data\conformance.pbbin" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-        <PackageReference Include="NUnit" Version="4.2.2" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.67.0">
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+        <PackageReference Include="NUnit" Version="4.4.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.72.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -33,7 +33,6 @@
         <ProjectReference Include="..\..\src\ProtoValidate\ProtoValidate.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <None Remove="proto\**\*.proto" />
         <Protobuf Include="proto\**\*.proto" ProtoRoot="proto" AdditionalImportDirs="$(SolutionDir)src\ProtoValidate\proto" AdditionalProtocArguments="--experimental_editions" />
     </ItemGroup>
 </Project>

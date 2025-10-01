@@ -10,3 +10,4 @@ syntax: glob
 .gradle/**
 build/
 tmp/
+*.orig

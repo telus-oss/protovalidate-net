@@ -193,13 +193,13 @@ public class ConformanceUnitTests
         var testResults = Validate(testData!, true);
 
         //test for Runtime.
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError), string.IsNullOrWhiteSpace(testResults.RuntimeError));
+        Assert.That(string.IsNullOrWhiteSpace(testResults.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
 
         //test for compilation errors
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError), string.IsNullOrWhiteSpace(testResults.CompilationError));
+        Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError)));
 
         //test for unexpected errors
-        Assert.AreEqual(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), string.IsNullOrWhiteSpace(testResults.UnexpectedError));
+        Assert.That(string.IsNullOrWhiteSpace(testResults.UnexpectedError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError)));
 
         if (testCase.ExpectedResult == null)
         {
@@ -209,31 +209,31 @@ public class ConformanceUnitTests
 
         if (testCase!.ExpectedResult!.Success)
         {
-            Assert.IsTrue(testResults.Success);
+            Assert.That(testResults.Success, Is.True);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
         }
         else if (testCase.ExpectedResult.HasUnexpectedError)
         {
-            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
             Assert.That(testResults.HasUnexpectedError, Is.True);
             
         }
         else if (testCase.ExpectedResult.HasRuntimeError)
         {
-            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
             Assert.That(testResults.HasRuntimeError, Is.True);
         }
         else if (testCase.ExpectedResult.HasCompilationError)
         {
-            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
             Assert.That(testResults.HasCompilationError, Is.True);
         }
         else
         {
-            Assert.IsFalse(testResults.Success);
+            Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Not.Null);
             Assert.That(testResults.ValidationError!.Violations_.Count, Is.EqualTo(1));
         }

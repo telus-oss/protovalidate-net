@@ -180,11 +180,9 @@ public class EvaluatorBuilder
     {
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
-        var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.Ignore);
-
         var valueEvaluatorEval = new ValueEvaluator(fieldConstraints, fieldDescriptor, fieldConstraints.CalculateIgnore(fieldDescriptor));
 
-        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints.Required, fieldConstraints.Ignore);
+        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldConstraints);
         BuildValue(fieldDescriptor, fieldConstraints, false, fieldEvaluator.ValueEvaluator, nestedMessageEvaluators);
         return fieldEvaluator;
     }

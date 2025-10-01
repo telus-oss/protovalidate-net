@@ -36,7 +36,7 @@ public class ValueEvaluator : IEvaluator
         Ignore = ignore;
         DefaultValue = fieldDescriptor.GetDefaultValue();
     }
-    
+
     public override string ToString()
     {
         return $"Value Evaluator: {FieldDescriptor.FullName}";
@@ -62,24 +62,22 @@ public class ValueEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
-            if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value.Value<object?>()))
+        if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value.Value<object?>()))
+        {
+            if (!FieldDescriptor.HasPresence)
             {
-                if (!FieldDescriptor.HasPresence)
-                {
-                    return ValidationResult.Empty;
-                }
-                if (FieldDescriptor.ContainingType != null && FieldDescriptor.ContainingType.IsMapEntry)
-                {
-                    return ValidationResult.Empty;
-                }
+                return ValidationResult.Empty;
             }
-
-            if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value.Value<object?>()))
+            if (FieldDescriptor.ContainingType != null && FieldDescriptor.ContainingType.IsMapEntry)
             {
                 return ValidationResult.Empty;
             }
         }
 
+        if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value.Value<object?>()))
+        {
+            return ValidationResult.Empty;
+        }
 
         var violations = new List<Violation>();
         foreach (var evaluator in Evaluators)
@@ -139,7 +137,7 @@ public class ValueEvaluator : IEvaluator
                     return true;
                 }
             }
-            
+
             if (ValueEquality(val, DefaultValue))
             {
                 return true;
