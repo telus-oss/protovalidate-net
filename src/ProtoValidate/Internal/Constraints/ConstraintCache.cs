@@ -74,14 +74,15 @@ public class ConstraintCache
                     continue;
                 }
 
-                var constraints = options.GetExtension(ValidateExtensions.Predefined);
-
-                if (constraints == null)
-                {
-                    constraints = new PredefinedConstraints();
-                }
-
-                var expressions = Expression.FromConstraints(constraints.Cel).ToList();
+                // var constraints = options.GetExtension(ValidateExtensions.Predefined);
+                //
+                // if (constraints == null)
+                // {
+                //     constraints = new PredefinedConstraints();
+                // }
+                //var constraints = new PredefinedConstraints();
+                //fix this - pulled from fieldConstraints.Cel
+                var expressions = Expression.FromConstraints(fieldConstraints.Cel).ToList();
 
                 var compiledPrograms = new List<CompiledExpression>();
 
@@ -103,11 +104,11 @@ public class ConstraintCache
         foreach (var extensionFieldDescriptor in Extensions.Where(c => c.IsExtension && c.ExtendeeType.ClrType == ruleType))
         {
             var extensionOptions = extensionFieldDescriptor.GetOptions();
-            var predefinedConstraints = extensionOptions.GetExtension(ValidateExtensions.Predefined);
-            if (predefinedConstraints == null)
-            {
-                continue;
-            }
+            // var predefinedConstraints = extensionOptions.GetExtension(ValidateExtensions.Predefined);
+            // if (predefinedConstraints == null)
+            // {
+            //     continue;
+            // }
 
             var extension = extensionFieldDescriptor.Extension;
             var extensionType = extension.GetType();
@@ -162,7 +163,9 @@ public class ConstraintCache
                 extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
             }
 
-            var expressions = Expression.FromConstraints(predefinedConstraints.Cel).ToList();
+            //FIX
+            //var expressions = Expression.FromConstraints(predefinedConstraints.Cel).ToList();
+            var expressions = Expression.FromConstraints(fieldConstraints.Cel).ToList();
 
             foreach (var expression in expressions)
             {

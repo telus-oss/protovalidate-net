@@ -2,7 +2,7 @@
     <Import Project="..\..\msbuild\package.props" />
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0;net8.0;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
         <RootNamespace>ProtoValidate</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -28,8 +28,8 @@
     <ItemGroup>
         <PackageReference Include="Cel" Version="0.3.1" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-        <PackageReference Include="Google.Protobuf" Version="3.29.3" />
-        <PackageReference Include="Grpc.Tools" Version="2.67.0">
+        <PackageReference Include="Google.Protobuf" Version="3.32.1" />
+        <PackageReference Include="Grpc.Tools" Version="2.72.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
