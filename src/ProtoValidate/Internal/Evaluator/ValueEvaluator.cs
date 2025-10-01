@@ -62,7 +62,7 @@ public class ValueEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
-        if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value.Value<object?>()))
+        if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value?.Value<object?>()))
         {
             if (!FieldDescriptor.HasPresence)
             {
@@ -74,7 +74,7 @@ public class ValueEvaluator : IEvaluator
             }
         }
 
-        if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value.Value<object?>()))
+        if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value?.Value<object?>()))
         {
             return ValidationResult.Empty;
         }
