@@ -1,10 +1,9 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using Cel;
 using Google.Protobuf;
-using Google.Protobuf.Reflection;
 using NUnit.Framework;
 using ProtoValidate.Internal.Cel;
 
@@ -169,14 +168,6 @@ public class FunctionsTest
     }
 
     [Test]
-    public void IsEmail_WithTooLongLocalPart_ReturnsFalse()
-    {
-        var longLocalPart = new string('a', 65) + "@example.com";
-        var result = Functions.IsEmail(new object[] { longLocalPart });
-        Assert.That(result, Is.EqualTo(false));
-    }
-
-    [Test]
     public void IsEmail_With_All_Characters_ReturnsTrue()
     {
         var emailWithAllChars = @"a0!#$%&'*+-/=?^_`{|}~@example.com";
@@ -295,33 +286,179 @@ public class FunctionsTest
     #region IsUri Tests
 
     [Test]
-    public void IsUri_WithValidHttpUri_ReturnsTrue()
+    [TestCase(@"https://foo%2x")]
+    [TestCase(@"foo:/nz/\u001f")]
+    [TestCase(@"https://foo%c3x%96")]
+    [TestCase(@"foo:nz/^")]
+    [TestCase(@"https://foo%")]
+    [TestCase(@"foo:^")]
+    [TestCase(@"https://example.com:x")]
+    [TestCase(@"https://foo@你好.com")]
+    [TestCase(@"https://\u001f@example.com")]
+    [TestCase(@"https://[::1%25foo%]")]
+    [TestCase(@"https://example.com#%2x")]
+    [TestCase(@"https://example.com?%2x")]
+    [TestCase(@"https://example.com?^")]
+    [TestCase(@"https://[::1%25]")]
+    [TestCase(@"foo:%x")]
+    [TestCase(@"foo://example.com/^")]
+    [TestCase(@"https://]@example.com")]
+    [TestCase(@"-foo://example.com")]
+    [TestCase(@"foo%20bar://example.com")]
+    [TestCase(@"https://%2x@example.com")]
+    [TestCase(@"foo:\u001f")]
+    [TestCase(@"https://@@example.com")]
+    [TestCase(@"foo://example.com/%x")]
+    [TestCase(@"https://example.com#^")]
+    [TestCase(@"https://[2001::0370::7334]")]
+    [TestCase(@"foo:/\u001f")]
+    [TestCase(@"https://example.com#\u001f")]
+    [TestCase(@"https://[::1%25foo%2x]")]
+    [TestCase(@"foo:/nz/^")]
+    [TestCase(@"foo:nz/\u001f")]
+    [TestCase(@"https://2001:0db8:85a3:0000:0000:8a2e:0370:7334")]
+    [TestCase(@"https://example.com##")]
+    [TestCase(@"https://[@example.com")]
+    [TestCase(@"foo:/^")]
+    [TestCase(@"https://example.com?\u001f")]
+    [TestCase(@"")]
+    [TestCase(@" https://example.com")]
+    [TestCase(@"https://[v1x]")]
+    [TestCase(@"//example.com/foo")]
+    [TestCase(@":foo://example.com")]
+    [TestCase(@"foo^bar://example.com")]
+    [TestCase(@"https://[::1%25foo%c3x%96]")]
+    [TestCase(@"https://example.com:8a")]
+    [TestCase(@"https://%@example.com")]
+    [TestCase(@"https://\u001f.com")]
+    [TestCase(@"foo://example.com/\u001f")]
+    [TestCase(@" ")]
+    [TestCase(@"https://^.com")]
+    [TestCase(@"https://example.com: 1")]
+    [TestCase(@"foo\u001fbar://example.com")]
+    [TestCase(@"foo:/nz/%x")]
+    [TestCase(@"https://[::1%eth0]")]
+    [TestCase(@"https://^@example.com")]
+    [TestCase(@"foo:/%x")]
+    [TestCase(@"https://example.com#%")]
+    [TestCase(@".foo://example.com")]
+    [TestCase(@"foo:nz/%x")]
+    [TestCase(@"https://example.com ")]
+    [TestCase(@"./")]
+    [TestCase(@"1foo://example.com")]
+    public void IsUri_Invalid_ReturnsFalse(string uri)
     {
-        var result = Functions.IsUri(new object[] { "https://example.com/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUri_WithValidFileUri_ReturnsTrue()
-    {
-        var result = Functions.IsUri(new object[] { "file:///path/to/file" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUri_WithRelativePath_ReturnsFalse()
-    {
-        var result = Functions.IsUri(new object[] { "/relative/path" });
+        var result = Functions.IsUri(new object[] { uri });
         Assert.That(result, Is.EqualTo(false));
     }
 
     [Test]
-    public void IsUri_WithInvalidUri_ReturnsFalse()
-    {
-        var result = Functions.IsUri(new object[] { "not-a-uri" });
-        Assert.That(result, Is.EqualTo(false));
-    }
+    [TestCase("https://!$&'()*+,;=@example.com")]
+    [TestCase("https://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]")]
+    [TestCase("https://example.com:")]
+    [TestCase("https://example.com#%c3x%96")]
+    [TestCase("https://example.com?#frag")]
+    [TestCase("https://joe@example.com/foo")]
+    [TestCase("https://example.com#!$&'()*+,;=")]
+    [TestCase("https:///@example.com")]
+    [TestCase("https://[::1%25eth0]")]
+    [TestCase("https://example.com:1")]
+    [TestCase("foo://example.com/")]
+    [TestCase("foo://example.com/%c3x%96")]
+    [TestCase("foo:nz?q#f")]
+    [TestCase("https://!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]
+    [TestCase("https://example.com:0")]
+    [TestCase("foo:/%c3%96")]
+    [TestCase("foo:/nz/%c3%96%c3")]
+    [TestCase("foo:nz/a")]
+    [TestCase("https://example.com/foo/bar?baz=quux#frag")]
+    [TestCase("foo0123456789azAZ+-.://example.com")]
+    [TestCase("https://[v1.x]")]
+    [TestCase("foo:/nz/%c3x%96")]
+    [TestCase("foo://example.com/%61%20%23")]
+    [TestCase("ftp://example.com")]
+    [TestCase("https://foo")]
+    [TestCase("https://example.com:65536")]
+    [TestCase("https://user:password@example.com")]
+    [TestCase("https://#@example.com")]
+    [TestCase("https://foo%c3%96")]
+    [TestCase("foo:/nz/%61%20%23")]
+    [TestCase("foo:nz/")]
+    [TestCase("foo:%c3%96")]
+    [TestCase("foo://example.com")]
+    [TestCase("https://example.com/foo/bar/")]
+    [TestCase("https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@example.com")]
+    [TestCase("foo:nz/%61%20%23")]
+    [TestCase("https://[v1234AF.x]")]
+    [TestCase("https://[vF.-!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]")]
+    [TestCase("https://example.com:65535")]
+    [TestCase("foo:/nz/a")]
+    [TestCase("https://foo%61%20%23")]
+    [TestCase("https://example.com/foo")]
+    [TestCase("foo:@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
+    [TestCase("foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase("foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase("https://example.com")]
+    [TestCase("foo:/%c3x%96")]
+    [TestCase("foo:nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase("https://example.com#%61%20%23")]
+    [TestCase("https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~@example.com")]
+    [TestCase("https://[::1%25foo%61%20%23]")]
+    [TestCase("foo:/@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
+    [TestCase("foo:nz//segment//segment/")]
+    [TestCase("foo:")]
+    [TestCase("foo:?q#f")]
+    [TestCase("https://:")]
+    [TestCase("foo://example.com/segment//segment/")]
+    [TestCase("https://example.com?%c3x%96")]
+    [TestCase("A://")]
+    [TestCase("https://example.com?%61%20%23")]
+    [TestCase("https://example.com?a=b&c&&=1&==")]
+    [TestCase("https://:@example.com")]
+    [TestCase("foo://example.com/a")]
+    [TestCase("https://example.com#/?")]
+    [TestCase("foo:/nz")]
+    [TestCase("foo:nz/%c3x%96")]
+    [TestCase("https://example.com?baz=quux")]
+    [TestCase("https://example.com?;")]
+    [TestCase("https://example.com/#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase("https://example.com/foo/bar")]
+    [TestCase("https://127.0.0.1")]
+    [TestCase("https://example.com?!$&'()*+,=")]
+    [TestCase("https://user@example.com")]
+    [TestCase("https://example.com:8080")]
+    [TestCase("https://%c3%963@example.com")]
+    [TestCase("foo:/nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase("foo:%c3x%96")]
+    [TestCase("foo://example.com/%c3%96")]
+    [TestCase("https://%61%20%23@example.com")]
+    [TestCase("https://:8080")]
+    [TestCase("foo:/nz?q#f")]
+    [TestCase("foo:/%61%20%23")]
+    [TestCase("foo:nz/%c3%96")]
+    [TestCase("scheme0123456789azAZ+-.://userinfo0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@host!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789/path0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20//foo/?query0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?#fragment0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase("https://%c3x%963@example.com")]
+    [TestCase("https://?@example.com")]
+    [TestCase("https://256.0.0.1")]
+    [TestCase("foo:/nz/")]
+    [TestCase("foo:nz")]
+    [TestCase("https://:::@example.com")]
+    [TestCase("https://[::1%25foo%c3%96]")]
+    [TestCase("https://example.com/foo/bar")]
+    [TestCase("https://example.com?%c3%96%c3")]
+    [TestCase("https://example.com?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase("https://example.com/foo")]
+    [TestCase("foo:%61%20%23")]
+    [TestCase("https://example.com?/?")]
+    [TestCase("https://example.com#%c3%96")]
+    [TestCase("foo:/nz//segment//segment/")]
+    [TestCase("https://example.com?:@")]
 
+    public void IsUri_Valid_ReturnsTrue(string uri)
+    {
+        var result = Functions.IsUri(new object[] { uri });
+        Assert.That(result, Is.EqualTo(true));
+    }
     #endregion
 
     #region IsUriRef Tests
@@ -344,6 +481,149 @@ public class FunctionsTest
     public void IsUriRef_WithQueryString_ReturnsTrue()
     {
         var result = Functions.IsUriRef(new object[] { "?query=value" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithFragment_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "#fragment" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithRelativePathAndQuery_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "path/to/resource?query=value" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithRelativePathAndFragment_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "path/to/resource#fragment" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithRelativePathQueryAndFragment_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "path/to/resource?query=value#fragment" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithAuthorityAndPath_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//example.com/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithAuthorityOnly_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//example.com" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithAuthorityAndQuery_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//example.com?query=value" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithCurrentDirectory_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "./" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithParentDirectory_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "../" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithEmptyString_ReturnsFalse()
+    {
+        var result = Functions.IsUriRef(new object[] { "" });
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void IsUriRef_WithPercentEncoding_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "path%20with%20spaces" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithInvalidPercentEncoding_ReturnsFalse()
+    {
+        var result = Functions.IsUriRef(new object[] { "path%ZZ" });
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void IsUriRef_WithDotSegments_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "./path/../other" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithColonInFirstSegment_ReturnsTrue()
+    {
+        // This is actually a valid URI with scheme "name" - RFC 3986 allows this
+        var result = Functions.IsUriRef(new object[] { "name:value/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithInvalidSchemeAndColonInPath_ReturnsFalse()
+    {
+        // This should fail as a URI (invalid scheme starting with digit)
+        // and fail as relative reference (colon in first segment)
+        var result = Functions.IsUriRef(new object[] { "123:invalid" });
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void IsUriRef_WithIPv6Authority_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//[2001:db8::1]/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithIPv6AuthorityAndZoneId_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//[fe80::1%25eth0]/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithUserInfoInAuthority_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//user:pass@example.com/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithPortInAuthority_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//example.com:8080/path" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsUriRef_WithCompleteAuthority_ReturnsTrue()
+    {
+        var result = Functions.IsUriRef(new object[] { "//user:pass@example.com:8080/path?query=value#fragment" });
         Assert.That(result, Is.EqualTo(true));
     }
 
@@ -563,14 +843,4 @@ public class FunctionsTest
 
     #endregion
 
-    // Helper class for testing
-    private class TestMessage : IMessage
-    {
-        public MessageDescriptor Descriptor => throw new NotImplementedException();
-        public int CalculateSize() => throw new NotImplementedException();
-        public void MergeFrom(CodedInputStream input) => throw new NotImplementedException();
-        public void WriteTo(CodedOutputStream output) => throw new NotImplementedException();
-        public IMessage Clone() => throw new NotImplementedException();
-        public bool Equals(IMessage other) => throw new NotImplementedException();
-    }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using Buf.Validate;
+using Buf.Validate.Conformance.Cases;
 using Buf.Validate.Conformance.Harness;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -82,6 +83,28 @@ public class ConformanceUnitTests
             {
                 UnexpectedError = e.ToString()
             };
+        }
+    }
+
+    [Test]
+    public void UriTestFetcher()
+    {
+        var testCases = ConformanceUnitTestParser.GetTestCases();
+        foreach (var testCase in testCases)
+        {
+            if (!string.Equals("library/is_uri", testCase.SuiteName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!testCase.CaseName.StartsWith("valid/", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var testData = (IsUri)testCase!.Input?.Unpack(TypeRegistry)!;
+
+            Console.WriteLine($"[TestCase(\"{testData.Val}\")]");
         }
     }
 
