@@ -19,8 +19,8 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class OneofEvaluator : IEvaluator
 {
-    private OneofDescriptor Descriptor { get; }
-    private bool Required { get; }
+    internal OneofDescriptor Descriptor { get; }
+    internal bool Required { get; }
 
     public OneofEvaluator(OneofDescriptor descriptor, bool required)
     {
@@ -56,7 +56,7 @@ public class OneofEvaluator : IEvaluator
             {
                 new Violation
                 {
-                    ConstraintId = "required",
+                    RuleId = "required",
                     Message = "Exactly one field is required in oneof."
                 }
             });

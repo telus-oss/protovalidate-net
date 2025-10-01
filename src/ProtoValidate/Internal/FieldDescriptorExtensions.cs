@@ -26,7 +26,7 @@ namespace ProtoValidate.Internal
 {
     internal static class FieldDescriptorExtensions
     {
-        private static readonly PropertyInfo ProtoPropertyInfo = typeof(FieldDescriptor).GetProperty("Proto", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        internal static readonly PropertyInfo ProtoPropertyInfo = typeof(FieldDescriptor).GetProperty("Proto", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         public static object? GetDefaultValue(this FieldDescriptor fieldDescriptor)
         {

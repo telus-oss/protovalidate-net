@@ -18,7 +18,7 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class MessageValue : IValue
 {
-    private IMessage InternalValue { get; }
+    internal IMessage InternalValue { get; }
 
     public MessageValue(IMessage value)
     {

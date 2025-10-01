@@ -19,7 +19,7 @@ namespace ProtoValidate.Conformance.Tests;
 
 public class ConformanceUnitTestCase
 {
-    public ConformanceUnitTestCase(string suiteName, string caseName, TestResult expectedResult, Any input)
+    public ConformanceUnitTestCase(string suiteName, string caseName, TestResult expectedResult, Any input, CaseResult? caseResult)
     {
         SuiteName = suiteName;
         CaseName = caseName;
@@ -31,6 +31,7 @@ public class ConformanceUnitTestCase
     public string CaseName { get; set; }
     public TestResult ExpectedResult { get; set; }
     public Any Input { get; set; }
+    public CaseResult? CaseResult { get; }
 
     public override string ToString()
     {

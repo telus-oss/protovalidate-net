@@ -19,7 +19,7 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class UnknownDescriptorEvaluator : IEvaluator
 {
-    private DescriptorBase Descriptor { get; }
+    internal DescriptorBase Descriptor { get; }
 
     public UnknownDescriptorEvaluator(DescriptorBase descriptor)
     {

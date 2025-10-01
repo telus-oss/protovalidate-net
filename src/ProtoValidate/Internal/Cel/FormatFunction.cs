@@ -23,15 +23,15 @@ namespace ProtoValidate.Internal.Cel;
 
 public static class FormatFunction
 {
-    private static readonly char[] HEX_ARRAY = "0123456789ABCDEF".ToCharArray();
-    private static readonly char[] LOWER_HEX_ARRAY = "0123456789abcdef".ToCharArray();
+    internal static readonly char[] HEX_ARRAY = "0123456789ABCDEF".ToCharArray();
+    internal static readonly char[] LOWER_HEX_ARRAY = "0123456789abcdef".ToCharArray();
 
     public static void RegisterProtoValidateFormatFunction(this CelEnvironment celEnvironment)
     {
         celEnvironment.RegisterFunction("format", new[] { typeof(string), typeof(object?[]) }, Format);
     }
 
-    private static object? Format(object?[] args)
+    internal static object? Format(object?[] args)
     {
         if (args.Length < 2)
         {
@@ -143,7 +143,7 @@ public static class FormatFunction
    * @param val the value to format.
    * @return the formatted string value.
    */
-    private static string FormatString(object? val)
+    internal static string FormatString(object? val)
     {
         if (val is string valString)
         {
@@ -153,7 +153,7 @@ public static class FormatFunction
         return FormatStringSafe(val, false);
     }
 
-    private static string FormatHex(object? val)
+    internal static string FormatHex(object? val)
     {
         if (val is string valString)
         {
@@ -171,7 +171,7 @@ public static class FormatFunction
    * @param listType indicates if the value type is a list.
    * @return the formatted string value.
    */
-    private static string FormatStringSafe(object? val, bool listType)
+    internal static string FormatStringSafe(object? val, bool listType)
     {
         if (val is bool valBool)
         {
@@ -236,27 +236,27 @@ public static class FormatFunction
         throw new CelExpressionParserException("format: unimplemented stringSafe type");
     }
 
-    private static string FormatBytes(ByteString val)
+    internal static string FormatBytes(ByteString val)
     {
         return "\"" + val.ToStringUtf8() + "\"";
     }
 
-    private static string FormatInt(long val)
+    internal static string FormatInt(long val)
     {
         return val.ToString(CultureInfo.InvariantCulture);
     }
 
-    private static string FormatUInt(ulong val)
+    internal static string FormatUInt(ulong val)
     {
         return val.ToString(CultureInfo.InvariantCulture);
     }
 
-    private static string FormatDouble(double val)
+    internal static string FormatDouble(double val)
     {
         return val.ToString("0.#", CultureInfo.InvariantCulture);
     }
 
-    private static string FormatTimestamp(Timestamp value)
+    internal static string FormatTimestamp(Timestamp value)
     {
         var ticks = TimeSpan.FromTicks(value.Nanos / 100);
         var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(value.Seconds).Add(ticks);
@@ -276,7 +276,7 @@ public static class FormatFunction
         return string.Concat("timestamp(", timestampString, ")");
     }
 
-    private static string FormatDuration(Duration value, bool listType)
+    internal static string FormatDuration(Duration value, bool listType)
     {
         var ticks = value.Seconds * 10000000000 + value.Nanos;
         var totalSeconds = Convert.ToInt64(Math.Truncate(ticks / 1000000000d));
@@ -291,7 +291,7 @@ public static class FormatFunction
         return durationString;
     }
 
-    private static string FormatList(IList val)
+    internal static string FormatList(IList val)
     {
         var sb = new StringBuilder();
         sb.Append('[');
@@ -310,7 +310,7 @@ public static class FormatFunction
         return sb.ToString();
     }
 
-    private static string BytesToHex(byte[] bytes, char[] digits)
+    internal static string BytesToHex(byte[] bytes, char[] digits)
     {
         var hexChars = new char[bytes.Length * 2];
         for (var j = 0; j < bytes.Length; j++)
@@ -323,7 +323,7 @@ public static class FormatFunction
         return hexChars.ToString() ?? "";
     }
 
-    private static string FormatHex(object? val, char[] digits)
+    internal static string FormatHex(object? val, char[] digits)
     {
         if (val is int valInt)
         {

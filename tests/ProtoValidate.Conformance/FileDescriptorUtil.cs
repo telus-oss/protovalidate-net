@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Reflection;
+using Buf.Validate.Conformance.Cases.CustomRules;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using Google.Protobuf.WellKnownTypes;

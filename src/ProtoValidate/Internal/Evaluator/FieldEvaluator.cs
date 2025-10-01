@@ -22,16 +22,16 @@ namespace ProtoValidate.Internal.Evaluator;
 public class FieldEvaluator : IEvaluator
 {
     public ValueEvaluator ValueEvaluator { get; }
-    private FieldDescriptor FieldDescriptor { get; }
-    private FieldConstraints FieldConstraints { get; }
+    internal FieldDescriptor FieldDescriptor { get; }
+    internal FieldRules FieldRules { get; }
 
-    private Ignore Ignore { get; }
-    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldConstraints fieldConstraints)
+    internal Ignore Ignore { get; }
+    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldRules fieldRules)
     {
         ValueEvaluator = valueEvaluator ?? throw new ArgumentNullException(nameof(valueEvaluator));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
-        FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
-        Ignore = fieldConstraints.CalculateIgnore(fieldDescriptor);
+        FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
+        Ignore = fieldRules.CalculateIgnore(fieldDescriptor);
     }
 
     public override string ToString()
@@ -39,13 +39,18 @@ public class FieldEvaluator : IEvaluator
         return $"Field Evaluator: {FieldDescriptor.FullName}";
     }
 
-    public bool Tautology => !FieldConstraints.Required && ValueEvaluator.Tautology;
+    public bool Tautology => !FieldRules.Required && ValueEvaluator.Tautology;
 
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
         var message = value?.MessageValue;
         if (message == null)
+        {
+            return ValidationResult.Empty;
+        }
+        
+        if (Ignore == Ignore.Always)
         {
             return ValidationResult.Empty;
         }
@@ -84,15 +89,21 @@ public class FieldEvaluator : IEvaluator
             }
         }
 
-        if (FieldConstraints.Required && !hasField)
+        if (FieldRules.Required && !hasField)
         {
+            var violationField = new FieldPath();
+            violationField.Elements.Add(new FieldPathElement()
+            {
+                FieldName = FieldDescriptor.Name,
+                FieldNumber = FieldDescriptor.FieldNumber
+            });
             return new ValidationResult(new[]
             {
                 new Violation
                 {
-                    ConstraintId = "required",
+                    RuleId = "required",
                     Message = "Value is required.",
-                    FieldPath = FieldDescriptor.Name
+                    Field = violationField
                 }
             });
         }

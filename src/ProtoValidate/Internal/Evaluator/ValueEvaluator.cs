@@ -23,15 +23,15 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class ValueEvaluator : IEvaluator
 {
-    public FieldConstraints FieldConstraints { get; }
+    public FieldRules FieldRules { get; }
     public FieldDescriptor FieldDescriptor { get; }
     public Ignore Ignore { get; }
-    private object? DefaultValue { get; }
+    internal object? DefaultValue { get; }
     public List<IEvaluator> Evaluators { get; } = new();
 
-    public ValueEvaluator(FieldConstraints fieldConstraints, FieldDescriptor fieldDescriptor, Ignore ignore)
+    public ValueEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, Ignore ignore)
     {
-        FieldConstraints = fieldConstraints ?? throw new ArgumentNullException(nameof(fieldConstraints));
+        FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
         Ignore = ignore;
         DefaultValue = fieldDescriptor.GetDefaultValue();
@@ -57,7 +57,7 @@ public class ValueEvaluator : IEvaluator
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
-        if (Ignore == Ignore.IfUnpopulated || Ignore == Ignore.IfDefaultValue)
+        if (Ignore == Ignore.Always)
         {
             return ValidationResult.Empty;
         }
@@ -79,11 +79,23 @@ public class ValueEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
+        var field = new FieldPath();
+        field.Elements.Add(new FieldPathElement()
+        {
+            FieldName = FieldDescriptor.Name,
+            FieldNumber = FieldDescriptor.FieldNumber
+        });
+
         var violations = new List<Violation>();
         foreach (var evaluator in Evaluators)
         {
             var evalResult = evaluator.Evaluate(value, failFast);
 
+            foreach (var violation in evalResult.Violations)
+            {
+                violation.Field = field;
+            }
+            
             if (failFast && !evalResult.IsSuccess)
             {
                 return evalResult;
@@ -100,7 +112,7 @@ public class ValueEvaluator : IEvaluator
         return new ValidationResult(violations);
     }
 
-    private bool IsDefaultValue(object? val)
+    internal bool IsDefaultValue(object? val)
     {
         if (val == null)
         {

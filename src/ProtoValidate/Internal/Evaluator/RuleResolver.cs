@@ -17,39 +17,39 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class ConstraintResolver
+public class RuleResolver
 {
     /// <summary>
     ///     Resolves the constraints for a message descriptor.
     /// </summary>
     /// <param name="descriptor">The descriptor for the message.</param>
     /// <returns>Returns the resolved message constraints.</returns>
-    public MessageConstraints ResolveMessageConstraints(MessageDescriptor descriptor)
+    public MessageRules ResolveMessageRules(MessageDescriptor descriptor)
     {
         var messageOptions = descriptor.GetOptions();
         if (messageOptions == null)
         {
-            return new MessageConstraints();
+            return new MessageRules();
         }
 
         var messageExtension = ValidateExtensions.Message;
 
         if (!messageOptions.HasExtension(messageExtension))
         {
-            return new MessageConstraints();
+            return new MessageRules();
         }
 
         var messageConstraints = messageOptions.GetExtension(messageExtension);
 
         if (messageConstraints == null)
         {
-            return new MessageConstraints();
+            return new MessageRules();
         }
 
         var disabled = messageConstraints.Disabled;
         if (disabled)
         {
-            return new MessageConstraints
+            return new MessageRules
             {
                 Disabled = true
             };
@@ -58,62 +58,41 @@ public class ConstraintResolver
         return messageConstraints;
     }
 
-    public OneofConstraints ResolveOneofConstraints(OneofDescriptor descriptor)
+    public OneofRules ResolveOneofRules(OneofDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
         if (options == null)
         {
-            return new OneofConstraints();
+            return new OneofRules();
         }
 
         if (!options.HasExtension(ValidateExtensions.Oneof))
         {
-            return new OneofConstraints();
+            return new OneofRules();
         }
 
         return options.GetExtension(ValidateExtensions.Oneof);
     }
 
-    public FieldConstraints ResolveFieldConstraints(FieldDescriptor descriptor)
+    public FieldRules ResolveFieldRules(FieldDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
         if (options == null || !options.HasExtension(ValidateExtensions.Field))
         {
-            return new FieldConstraints();
+            return new FieldRules();
         }
 
-        var fieldConstraints = options.GetExtension(ValidateExtensions.Field);
+        var fieldRules = options.GetExtension(ValidateExtensions.Field);
 
-#pragma warning disable CS0612 // Type or member is obsolete
-        if (fieldConstraints.Ignore == Ignore.Unspecified)
+        if (fieldRules.Ignore == Ignore.Unspecified)
         {
             if (descriptor.HasPresence)
             {
-                fieldConstraints.Ignore = Ignore.IfUnpopulated;
+                fieldRules.Ignore = Ignore.IfUnpopulated;
             }
+        }
 
-            // if (fieldConstraints.HasIgnoreEmpty && fieldConstraints.IgnoreEmpty)
-            //
-            // {
-            //     fieldConstraints.Ignore = Ignore.IfUnpopulated;
-            // }
-            //
-            // if (fieldConstraints.HasSkipped && fieldConstraints.Skipped)
-            // {
-            //     fieldConstraints.Ignore = Ignore.Always;
-            // }
-        }
-        else if (fieldConstraints.Ignore == Ignore.Empty)
-        {
-            fieldConstraints.Ignore = Ignore.IfUnpopulated;
-        }
-        else if (fieldConstraints.Ignore == Ignore.Default)
-        {
-            fieldConstraints.Ignore = Ignore.IfDefaultValue;
-        }
-#pragma warning restore CS0612 // Type or member is obsolete
-
-        return fieldConstraints;
+        return fieldRules;
     }
 
     // public PredefinedConstraints ResolvePredefinedConstraints(FieldDescriptor descriptor)

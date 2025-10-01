@@ -19,8 +19,8 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class EnumEvaluator : IEvaluator
 {
-    private IList<EnumValueDescriptor> ValueDescriptors { get; }
-    private Dictionary<int, EnumValueDescriptor> Values { get; }
+    internal IList<EnumValueDescriptor> ValueDescriptors { get; }
+    internal Dictionary<int, EnumValueDescriptor> Values { get; }
 
     public EnumEvaluator(IList<EnumValueDescriptor> valueDescriptors)
     {
@@ -67,7 +67,7 @@ public class EnumEvaluator : IEvaluator
             {
                 new Violation
                 {
-                    ConstraintId = "enum.defined_only",
+                    RuleId = "enum.defined_only",
                     Message = "Value must be one of the defined enum values."
                 }
             });

@@ -74,7 +74,7 @@ public class CompiledProgram
 
             return new Violation
             {
-                ConstraintId = Source.Id,
+                RuleId = Source.Id,
                 Message = evalResultString
             };
         }
@@ -88,7 +88,7 @@ public class CompiledProgram
 
             return new Violation
             {
-                ConstraintId = Source.Id,
+                RuleId = Source.Id,
                 Message = Source.Message
             };
         }

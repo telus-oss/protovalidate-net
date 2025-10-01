@@ -41,28 +41,28 @@ public class Expression
         ExpressionText = expressionText;
     }
 
-    public Expression(Constraint constraint)
+    public Expression(Rule rule)
     {
-        if (constraint == null)
+        if (rule == null)
         {
-            throw new ArgumentNullException(nameof(constraint));
+            throw new ArgumentNullException(nameof(rule));
         }
 
-        Id = constraint.Id;
-        Message = constraint.Message;
-        ExpressionText = constraint.Expression;
+        Id = rule.Id;
+        Message = rule.Message;
+        ExpressionText = rule.Expression;
     }
     
-    public static IEnumerable<Expression> FromConstraints(IEnumerable<Constraint> constraints)
+    public static IEnumerable<Expression> FromRules(IEnumerable<Rule> rules)
     {
-        if (constraints == null)
+        if (rules == null)
         {
-            throw new ArgumentNullException(nameof(constraints));
+            throw new ArgumentNullException(nameof(rules));
         }
 
-        foreach (var constraint in constraints)
+        foreach (var rule in rules)
         {
-            yield return new Expression(constraint);
+            yield return new Expression(rule);
         }
     }
 }

@@ -20,8 +20,8 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class ObjectValue : IValue
 {
-    private object? InternalValue { get; }
-    private FieldDescriptor FieldDescriptor { get; }
+    internal object? InternalValue { get; }
+    internal FieldDescriptor FieldDescriptor { get; }
 
     public ObjectValue(FieldDescriptor fieldDescriptor, object? internalValue)
     {
