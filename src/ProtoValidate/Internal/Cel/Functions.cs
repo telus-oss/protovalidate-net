@@ -1,4 +1,4 @@
-// Copyright 2024 TELUS
+// Copyright 2024-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
+using Cel;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using System.Collections;
 using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using Cel;
-using Google.Protobuf;
 
 namespace ProtoValidate.Internal.Cel;
 
@@ -50,8 +49,7 @@ public static class Functions
 
         celEnvironment.RegisterFunction("unique", new[] { typeof(IEnumerable) }, Unique);
 
-        celEnvironment.RegisterFunction("startsWith", new[] { typeof(ByteString), typeof(ByteString) },
-            StartsWith_Bytes);
+        celEnvironment.RegisterFunction("startsWith", new[] { typeof(ByteString), typeof(ByteString) }, StartsWith_Bytes);
         celEnvironment.RegisterFunction("endsWith", new[] { typeof(ByteString), typeof(ByteString) }, EndsWith_Bytes);
         celEnvironment.RegisterFunction("contains", new[] { typeof(ByteString), typeof(ByteString) }, Contains_Bytes);
 
@@ -67,14 +65,12 @@ public static class Functions
 
         if (!(args[0] is IMessage message))
         {
-            throw new CelNoSuchOverloadException(
-                $"No overload exists to for 'getField' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
+            throw new CelNoSuchOverloadException($"No overload exists to for 'getField' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
         }
 
         if (!(args[1] is string fieldName))
         {
-            throw new CelNoSuchOverloadException(
-                $"No overload exists to for 'getField' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
+            throw new CelNoSuchOverloadException($"No overload exists to for 'getField' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
         }
 
         if (message == null)
@@ -114,8 +110,7 @@ public static class Functions
         }
 
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'unique' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'unique' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     internal static object? IsNan(object?[] args)
@@ -136,8 +131,7 @@ public static class Functions
             return double.IsNaN(valueDouble);
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'isNan' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isNan' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     internal static object? IsInf(object?[] args)
@@ -212,8 +206,7 @@ public static class Functions
             }
             else
             {
-                throw new CelNoSuchOverloadException(
-                    $"No overload exists to for 'isIp' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+                throw new CelNoSuchOverloadException($"No overload exists to for 'isIp' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
             }
         }
 
@@ -223,8 +216,7 @@ public static class Functions
             return IsIP(valueString, version);
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'isIp' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isIp' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     internal static bool IsIP(string value, long? version)
@@ -266,8 +258,7 @@ public static class Functions
             }
             else
             {
-                throw new CelNoSuchOverloadException(
-                    $"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+                throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
             }
         }
 
@@ -277,8 +268,7 @@ public static class Functions
             return IsIPNetworkWithVersion(valueString, null, validNetworkAddress);
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'isIpPrefix' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     internal static object? IsIPPrefixWithVersion(object?[] args)
@@ -331,8 +321,7 @@ public static class Functions
         }
         else
         {
-            throw new CelNoSuchOverloadException(
-                $"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+            throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
         }
 
         if (args.Length == 3)
@@ -343,8 +332,7 @@ public static class Functions
             }
             else
             {
-                throw new CelNoSuchOverloadException(
-                    $"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
+                throw new CelNoSuchOverloadException($"No overload exists to for 'isIpPrefix' function with argument type '{args[1]?.GetType().FullName ?? "null"}'.");
             }
         }
 
@@ -375,7 +363,7 @@ public static class Functions
             return false;
         }
 
-        IPAddress address = isIpV4 ? ipv4Address! : ipv6Address!;
+        var address = isIpV4 ? ipv4Address! : ipv6Address!;
 
         if (isIpV4 && version.GetValueOrDefault() != 0 && version != 4)
         {
@@ -510,8 +498,7 @@ public static class Functions
             return IsHostname(valueString);
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'isHostname' function with argument type '{value?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isHostname' function with argument type '{value?.GetType().FullName ?? "null"}'.");
     }
 
     internal static bool IsHostname(string value)
@@ -566,30 +553,6 @@ public static class Functions
         return !allDigits;
     }
 
-    internal static bool IsPort(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var port))
-        {
-            if (!string.Equals(value, port.ToString("0", CultureInfo.InvariantCulture)))
-            {
-                //don't allow double zero port.
-                return false;
-            }
-
-            if (port >= 0 && port <= 65535)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     internal static object? IsHostAndPort(object?[] args)
     {
         if (args.Length != 2)
@@ -605,8 +568,7 @@ public static class Functions
             return IsHostAndPort(valueString, portRequired);
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists to for 'isHostAndPort' function with argument types '{valueArg?.GetType().FullName ?? "null"}' and '{portRequiredArg?.GetType().FullName ?? "null"}'.");
+        throw new CelNoSuchOverloadException($"No overload exists to for 'isHostAndPort' function with argument types '{valueArg?.GetType().FullName ?? "null"}' and '{portRequiredArg?.GetType().FullName ?? "null"}'.");
     }
 
     internal static bool IsHostAndPort(string value, bool portRequired)
@@ -656,10 +618,10 @@ public static class Functions
 
         if (isHostNameInBrackets)
         {
-            return IsIP(host, 6) && IsPort(port);
+            return IsIP(host, 6) && ValidatePort(port, true);
         }
 
-        return (IsHostname(host) || IsIP(host, 4)) && IsPort(port);
+        return (IsHostname(host) || IsIP(host, 4)) && ValidatePort(port, true);
     }
 
 
@@ -672,8 +634,7 @@ public static class Functions
 
         if (args[0] is not string valueString)
         {
-            throw new CelNoSuchOverloadException(
-                $"No overload exists to for 'isUri' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
+            throw new CelNoSuchOverloadException($"No overload exists to for 'isUri' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
         }
 
         return IsValidUri(valueString);
@@ -688,8 +649,7 @@ public static class Functions
 
         if (args[0] is not string valueString)
         {
-            throw new CelNoSuchOverloadException(
-                $"No overload exists to for 'isUriRef' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
+            throw new CelNoSuchOverloadException($"No overload exists to for 'isUriRef' function with argument type '{args[0]?.GetType().FullName ?? "null"}'.");
         }
 
         return IsValidUriReference(valueString);
@@ -698,7 +658,7 @@ public static class Functions
     #region URI Validation Methods
 
     /// <summary>
-    /// Validates if a string is a valid absolute URI according to RFC 3986
+    ///     Validates if a string is a valid absolute URI according to RFC 3986
     /// </summary>
     private static bool IsValidUri(string uriString)
     {
@@ -706,7 +666,7 @@ public static class Functions
         {
             return false;
         }
-        
+
         // URIs starting with "//" are relative references, not absolute URIs
         if (uriString.StartsWith("//"))
         {
@@ -813,8 +773,8 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates if a string is a valid URI reference according to RFC 3986
-    /// URI references include both absolute URIs and relative references
+    ///     Validates if a string is a valid URI reference according to RFC 3986
+    ///     URI references include both absolute URIs and relative references
     /// </summary>
     private static bool IsValidUriReference(string uriRefString)
     {
@@ -862,9 +822,20 @@ public static class Functions
 
                     // Find the end of the first segment
                     var firstSegmentEnd = uriRefString.Length;
-                    if (firstSlashIndex >= 0) firstSegmentEnd = Math.Min(firstSegmentEnd, firstSlashIndex);
-                    if (firstQuestionIndex >= 0) firstSegmentEnd = Math.Min(firstSegmentEnd, firstQuestionIndex);
-                    if (firstHashIndex >= 0) firstSegmentEnd = Math.Min(firstSegmentEnd, firstHashIndex);
+                    if (firstSlashIndex >= 0)
+                    {
+                        firstSegmentEnd = Math.Min(firstSegmentEnd, firstSlashIndex);
+                    }
+
+                    if (firstQuestionIndex >= 0)
+                    {
+                        firstSegmentEnd = Math.Min(firstSegmentEnd, firstQuestionIndex);
+                    }
+
+                    if (firstHashIndex >= 0)
+                    {
+                        firstSegmentEnd = Math.Min(firstSegmentEnd, firstHashIndex);
+                    }
 
                     var firstSegment = uriRefString.Substring(0, firstSegmentEnd);
 
@@ -894,8 +865,8 @@ public static class Functions
     }
 
     /// <summary>
-    /// Checks if a string contains any non-ASCII characters
-    /// RFC 3986 requires that URIs use only ASCII characters
+    ///     Checks if a string contains any non-ASCII characters
+    ///     RFC 3986 requires that URIs use only ASCII characters
     /// </summary>
     private static bool ContainsNonAsciiCharacters(string input)
     {
@@ -911,7 +882,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates percent encoding in a URI string
+    ///     Validates percent encoding in a URI string
     /// </summary>
     private static bool IsValidPercentEncoding(string uriString)
     {
@@ -942,8 +913,8 @@ public static class Functions
     }
 
     /// <summary>
-    /// Checks if a URI contains invalid unescaped characters that should be percent-encoded
-    /// According to RFC 3986, certain characters must be percent-encoded in URIs
+    ///     Checks if a URI contains invalid unescaped characters that should be percent-encoded
+    ///     According to RFC 3986, certain characters must be percent-encoded in URIs
     /// </summary>
     private static bool ContainsInvalidUnescapedCharacters(string uriString)
     {
@@ -982,7 +953,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Checks for invalid URI syntax patterns that .NET might accept but violate RFC 3986
+    ///     Checks for invalid URI syntax patterns that .NET might accept but violate RFC 3986
     /// </summary>
     private static bool ContainsInvalidSyntaxPatterns(string uriString)
     {
@@ -1014,7 +985,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates a URI scheme according to RFC 3986
+    ///     Validates a URI scheme according to RFC 3986
     /// </summary>
     private static bool IsValidScheme(string scheme)
     {
@@ -1043,91 +1014,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates authority-based URIs (those starting with scheme://)
-    /// </summary>
-    private static bool ValidateAuthorityBasedUri(string fullUri, string afterAuthority)
-    {
-        // Parse authority, path, query, fragment
-        var authorityEnd = afterAuthority.Length;
-
-        // Find the end of authority (start of path, query, or fragment)
-        for (var i = 0; i < afterAuthority.Length; i++)
-        {
-            var c = afterAuthority[i];
-            if (c == '/' || c == '?' || c == '#')
-            {
-                authorityEnd = i;
-                break;
-            }
-        }
-
-        // Extract authority
-        var authority = afterAuthority.Substring(0, authorityEnd);
-
-        // Validate authority
-        if (!ValidateAuthority(authority))
-        {
-            return false;
-        }
-
-        // Find query and fragment boundaries in the remaining part
-        var remaining = afterAuthority.Substring(authorityEnd);
-        var queryIndex = remaining.IndexOf('?');
-        var fragmentIndex = remaining.IndexOf('#');
-
-        // Validate path component
-        var pathEnd = remaining.Length;
-        if (queryIndex >= 0)
-        {
-            pathEnd = Math.Min(pathEnd, queryIndex);
-        }
-
-        if (fragmentIndex >= 0)
-        {
-            pathEnd = Math.Min(pathEnd, fragmentIndex);
-        }
-
-        if (pathEnd > 0)
-        {
-            var path = remaining.Substring(0, pathEnd);
-            if (!ValidateUriComponent(path, false)) // path allows '/'
-            {
-                return false;
-            }
-        }
-
-        // Validate query component
-        if (queryIndex >= 0)
-        {
-            var queryEnd = remaining.Length;
-            if (fragmentIndex > queryIndex)
-            {
-                queryEnd = fragmentIndex;
-            }
-
-            var query = remaining.Substring(queryIndex + 1, queryEnd - queryIndex - 1);
-            if (!ValidateUriComponent(query, true)) // query allows '?' but we've already stripped it
-            {
-                return false;
-            }
-        }
-
-        // Validate fragment component
-        if (fragmentIndex >= 0)
-        {
-            var fragment = remaining.Substring(fragmentIndex + 1);
-            if (!ValidateUriComponent(fragment, true)) // fragment allows '#' but we've already stripped it
-            {
-                return false;
-            }
-        }
-
-        // Final validation using .NET parser if all manual checks pass
-        return Uri.TryCreate(fullUri, UriKind.Absolute, out var uri) && uri != null;
-    }
-
-    /// <summary>
-    /// Validates a URI authority component (userinfo@host:port)
+    ///     Validates a URI authority component (userinfo@host:port)
     /// </summary>
     private static bool ValidateAuthority(string authority)
     {
@@ -1152,7 +1039,7 @@ public static class Functions
 
         // Parse host and port
         string host;
-        string port = "";
+        var port = "";
 
         if (hostPort.StartsWith("["))
         {
@@ -1178,6 +1065,7 @@ public static class Functions
                 {
                     return false; // Invalid character after ]
                 }
+
                 if (closeBracket + 2 < hostPort.Length)
                 {
                     port = hostPort.Substring(closeBracket + 2);
@@ -1213,7 +1101,7 @@ public static class Functions
         // Validate port if present
         if (!string.IsNullOrEmpty(port))
         {
-            if (!ValidatePort(port))
+            if (!ValidatePort(port, false))
             {
                 return false;
             }
@@ -1223,7 +1111,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates userinfo component
+    ///     Validates userinfo component
     /// </summary>
     private static bool ValidateUserInfo(string userInfo)
     {
@@ -1248,6 +1136,7 @@ public static class Functions
                 {
                     return false;
                 }
+
                 i += 2;
             }
             else if (!char.IsLetterOrDigit(c) &&
@@ -1264,7 +1153,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates an IPv6 host component
+    ///     Validates an IPv6 host component
     /// </summary>
     private static bool ValidateIPv6Host(string host)
     {
@@ -1312,9 +1201,11 @@ public static class Functions
                             return false;
                         }
                     }
+
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -1337,7 +1228,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates a host component (hostname or IPv4 address)
+    ///     Validates a host component (hostname or IPv4 address)
     /// </summary>
     private static bool ValidateHost(string host)
     {
@@ -1377,7 +1268,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates a reg-name according to RFC 3986 (more permissive than hostname)
+    ///     Validates a reg-name according to RFC 3986 (more permissive than hostname)
     /// </summary>
     private static bool IsValidRegName(string regName)
     {
@@ -1401,6 +1292,7 @@ public static class Functions
                 {
                     return false;
                 }
+
                 i += 2;
             }
             else if (!char.IsLetterOrDigit(c) &&
@@ -1416,36 +1308,43 @@ public static class Functions
         return true;
     }
 
+   
     /// <summary>
-    /// Validates a port number
+    ///     Validates a port number for a uri authority
     /// </summary>
-    private static bool ValidatePort(string port)
+    private static bool ValidatePort(string port , bool validatePortRange)
     {
         if (string.IsNullOrEmpty(port))
         {
-            return true; // Empty port is valid in authority (just the colon)
+            return false; 
         }
 
-        // Port must be all digits
-        foreach (var c in port)
+        
+        if (int.TryParse(port, NumberStyles.Integer, CultureInfo.InvariantCulture, out var portNum))
         {
-            if (!char.IsDigit(c))
+            if (!string.Equals(port, portNum.ToString("0", CultureInfo.InvariantCulture)))
+            {
+                //don't allow double zero port.
+                return false;
+            }
+
+            if (validatePortRange && portNum > 65535)
             {
                 return false;
             }
-        }
 
-        // Convert to number and check range
-        if (int.TryParse(port, NumberStyles.None, CultureInfo.InvariantCulture, out var portNumber))
-        {
-            return portNumber >= 0 && portNumber <= 65535;
+            if (portNum >= 0 )
+            {
+                return true;
+            }
         }
 
         return false;
     }
 
+
     /// <summary>
-    /// Validates a URI component (path, query, or fragment)
+    ///     Validates a URI component (path, query, or fragment)
     /// </summary>
     private static bool ValidateUriComponent(string component, bool allowQuery)
     {
@@ -1467,6 +1366,7 @@ public static class Functions
                 {
                     return false;
                 }
+
                 i += 2;
             }
             else if (!IsValidUriChar(c, allowQuery))
@@ -1479,7 +1379,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Checks if a character is valid in a URI component
+    ///     Checks if a character is valid in a URI component
     /// </summary>
     private static bool IsValidUriChar(char c, bool allowQuery)
     {
@@ -1492,7 +1392,7 @@ public static class Functions
         // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
         if (c == '!' || c == '$' || c == '&' || c == '\'' ||
             c == '(' || c == ')' || c == '*' || c == '+' ||
-            c == ',' || c == ';' || c == '=' )
+            c == ',' || c == ';' || c == '=')
         {
             return true;
         }
@@ -1513,7 +1413,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Additional validation for URIs that .NET accepts to ensure strict RFC 3986 compliance
+    ///     Additional validation for URIs that .NET accepts to ensure strict RFC 3986 compliance
     /// </summary>
     private static bool IsStrictlyRfc3986Compliant(string originalUri, Uri parsedUri)
     {
@@ -1529,7 +1429,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Checks if character is a hexadecimal digit.
+    ///     Checks if character is a hexadecimal digit.
     /// </summary>
     private static bool IsHexDigit(char c)
     {
@@ -1563,8 +1463,7 @@ public static class Functions
             return true;
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists for 'startsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
+        throw new CelNoSuchOverloadException($"No overload exists for 'startsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
     }
 
     internal static object EndsWith_Bytes(object?[] args)
@@ -1594,8 +1493,7 @@ public static class Functions
             return true;
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
+        throw new CelNoSuchOverloadException($"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
     }
 
     internal static object Contains_Bytes(object?[] args)
@@ -1647,11 +1545,10 @@ public static class Functions
             return false;
         }
 
-        throw new CelNoSuchOverloadException(
-            $"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
+        throw new CelNoSuchOverloadException($"No overload exists for 'endsWith' function with argument types '{args[0]?.GetType().FullName ?? "null"}' and '{args[1]?.GetType().FullName ?? "null"}.");
     }
 
-    public static bool TryParseStrictIPv4(string ipString, out IPAddress ipAddress)
+    public static bool TryParseStrictIPv4(string ipString, out IPAddress? ipAddress)
     {
         // 1. First, use the built-in TryParse.
         // This handles general IP parsing and validation of octet values.
@@ -1679,6 +1576,7 @@ public static class Functions
     /// </summary>
     /// <param name="addressString">The string to parse.</param>
     /// <param name="address">When this method returns, contains the parsed IPAddress if successful.</param>
+    /// <param name="zoneId">When this method returns, contains the parsed ipv6 zone if successful.</param>
     /// <returns>True if the parsing was strict, otherwise false.</returns>
     public static bool TryParseStrictIpv6(string addressString, out IPAddress? address, out string? zoneId)
     {
@@ -1700,12 +1598,6 @@ public static class Functions
                 return false;
             }
 
-            // Check for invalid zone IDs that are just percent-encoded percent signs or other invalid patterns
-            if (zoneId == "25" || zoneId == "%25" || zoneId == "%")
-            {
-                return false;
-            }
-
             // Validate percent encoding in zone ID if it contains % characters
             if (zoneId.Contains("%"))
             {
@@ -1714,16 +1606,6 @@ public static class Functions
                     return false;
                 }
             }
-
-            // Zone IDs can contain alphanumeric characters, hyphens, underscores, and dots
-            // This follows common conventions for interface names and zone identifiers
-            // foreach (var c in zoneId)
-            // {
-            //     if (!char.IsLetterOrDigit(c) && c != '-' && c != '_' && c != '.')
-            //     {
-            //         return false;
-            //     }
-            // }
         }
         else
         {
@@ -1746,13 +1628,11 @@ public static class Functions
         //    the canonical form with a re-parsed version of the canonical form.
         //    This ensures we accept valid IPv6 formats including those with leading zeros.
         var canonicalForm = tempAddress.ToString();
-        if (IPAddress.TryParse(canonicalForm, out var canonicalAddress) &&
-            tempAddress.Equals(canonicalAddress))
+        if (IPAddress.TryParse(canonicalForm, out var canonicalAddress) && tempAddress.Equals(canonicalAddress))
         {
             // Additional validation: ensure the input doesn't contain invalid characters or formats
             // by checking that when we parse it again, we get the same address
-            if (IPAddress.TryParse(ipPart, out var reparsedOriginal) &&
-                tempAddress.Equals(reparsedOriginal))
+            if (IPAddress.TryParse(ipPart, out var reparsedOriginal) && tempAddress.Equals(reparsedOriginal))
             {
                 address = tempAddress;
                 return true;
@@ -1765,7 +1645,7 @@ public static class Functions
     }
 
     /// <summary>
-    /// Validates percent encoding specifically in IPv6 zone IDs with stricter rules
+    ///     Validates percent encoding specifically in IPv6 zone IDs with stricter rules
     /// </summary>
     private static bool IsValidZoneIdPercentEncoding(string zoneId)
     {
