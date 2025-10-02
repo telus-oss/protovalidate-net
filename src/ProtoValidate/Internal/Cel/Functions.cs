@@ -920,7 +920,7 @@ public static class Functions
     {
         // Characters that are not allowed unescaped in URIs according to RFC 3986
         // These are characters outside the "unreserved" and "reserved" sets that .NET might accept
-        var invalidChars = new[] { '^', '`', '{', '}', '|', '\\', '"', '<', '>', ' ', '\t', '\r', '\n' };
+        var invalidChars = new[] { '^', '`', '{', '}', '|', '\\', '"' , '<', '>', ' ', '\t', '\r', '\n' };
 
         for (var i = 0; i < uriString.Length; i++)
         {
@@ -1212,6 +1212,13 @@ public static class Functions
         // Validate zone ID if present
         if (zoneId != null)
         {
+            // Special case: %25 is URL-encoded %, which results in an empty zone ID
+            // This is invalid according to RFC 3986
+            if (zoneId == "25")
+            {
+                return false;
+            }
+
             if (string.IsNullOrEmpty(zoneId))
             {
                 return false;
@@ -1236,6 +1243,12 @@ public static class Functions
         if (string.IsNullOrEmpty(host))
         {
             return true;
+        }
+
+        // Validate percent encoding in host more strictly
+        if (!IsValidHostPercentEncoding(host))
+        {
+            return false;
         }
 
         // Check for invalid characters first
@@ -1416,7 +1429,7 @@ public static class Functions
         // sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
         if (c == '!' || c == '$' || c == '&' || c == '\'' ||
             c == '(' || c == ')' || c == '*' || c == '+' ||
-            c == ',' || c == ';' || c == '=')
+            c == ',' || c == ';' || c == '=' )
         {
             return true;
         }
@@ -1600,19 +1613,18 @@ public static class Functions
             ipPart = addressString.Substring(0, zoneIndex);
             zoneId = addressString.Substring(zoneIndex + 1);
 
-            // Validate zone identifier - must be non-empty and contain valid characters
+            // Validate zone identifier - must be non-empty
+            // Zone IDs can contain various characters including spaces and control characters
             if (string.IsNullOrEmpty(zoneId))
             {
                 return false;
             }
 
-            // Validate percent encoding in zone ID if it contains % characters
-            if (zoneId.Contains("%"))
+            // Only validate percent encoding in zone ID if it appears to use percent encoding
+            // (i.e., contains % followed by what looks like hex digits)
+            if (zoneId.Contains("%") && HasPercentEncodingPattern(zoneId) && !IsValidZoneIdPercentEncoding(zoneId))
             {
-                if (!IsValidZoneIdPercentEncoding(zoneId))
-                {
-                    return false;
-                }
+                return false;
             }
         }
         else
@@ -1650,6 +1662,72 @@ public static class Functions
         // At this point, the string parsed to an IPv6 address, but it wasn't
         // in a valid format that we can safely accept.
         return false;
+    }
+
+    /// <summary>
+    ///     Validates percent encoding specifically in host components with stricter rules
+    /// </summary>
+    private static bool IsValidHostPercentEncoding(string host)
+    {
+        for (var i = 0; i < host.Length; i++)
+        {
+            if (host[i] == '%')
+            {
+                // Must have at least 2 more characters
+                if (i + 2 >= host.Length)
+                {
+                    return false;
+                }
+
+                // Next two characters must be hex digits
+                var hex1 = host[i + 1];
+                var hex2 = host[i + 2];
+
+                if (!IsHexDigit(hex1) || !IsHexDigit(hex2))
+                {
+                    return false;
+                }
+
+                // For host components, be stricter about malformed percent encoding patterns
+                // If there's a 3rd character that's a letter but not hex, it looks like malformed encoding
+                if (i + 3 < host.Length)
+                {
+                    var possibleHex3 = host[i + 3];
+                    // If the character after a valid %XX is a letter (but not hex), this looks like
+                    // malformed percent encoding like %c3x, %a5g, etc.
+                    if (char.IsLetter(possibleHex3) && !IsHexDigit(possibleHex3))
+                    {
+                        return false;
+                    }
+                }
+
+                i += 2; // Skip the hex digits
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    ///     Checks if a zone ID string contains patterns that look like percent encoding
+    /// </summary>
+    private static bool HasPercentEncodingPattern(string zoneId)
+    {
+        for (var i = 0; i < zoneId.Length - 2; i++)
+        {
+            if (zoneId[i] == '%')
+            {
+                // Check if next two characters look like hex digits
+                var char1 = zoneId[i + 1];
+                var char2 = zoneId[i + 2];
+                
+                if (IsHexDigit(char1) && IsHexDigit(char2))
+                {
+                    return true; // Found a pattern that looks like percent encoding
+                }
+            }
+        }
+        return false; // No percent encoding patterns found
     }
 
     /// <summary>

@@ -141,6 +141,42 @@ public class FunctionsTest
         Assert.That(result, Is.EqualTo(false));
     }
 
+    [Test]
+    public void IsIP_WithIPv6ComplexZoneId_ReturnsTrue()
+    {
+        // Test the specific case: "::1%% :x\u001f" should be valid
+        var result = Functions.IsIP(new object[] { "::1%% :x\u001f" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsIP_WithIPv6ZoneIdWithSpaces_ReturnsTrue()
+    {
+        var result = Functions.IsIP(new object[] { "fe80::1% space zone" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsIP_WithIPv6ZoneIdWithControlCharacters_ReturnsTrue()
+    {
+        var result = Functions.IsIP(new object[] { "::1%\u0001\u0002\u0003" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsIP_WithIPv6ZoneIdWithMixedCharacters_ReturnsTrue()
+    {
+        var result = Functions.IsIP(new object[] { "2001:db8::1%eth0:123!@#" });
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void IsIP_WithIPv6ZoneIdEmpty_ReturnsFalse()
+    {
+        var result = Functions.IsIP(new object[] { "::1%" });
+        Assert.That(result, Is.EqualTo(false));
+    }
+
     #endregion
 
     #region IsEmail Tests
