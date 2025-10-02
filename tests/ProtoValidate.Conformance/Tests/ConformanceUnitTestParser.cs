@@ -29,6 +29,7 @@ public class ConformanceUnitTestParser
         ("standard_rules/well_known_types/timestamp", "gt_now/within/valid"),
         ("standard_rules/well_known_types/timestamp", "lt_now/invalid"),
         ("standard_rules/well_known_types/timestamp", "lt_now/within/valid"),
+        ("standard_rules/well_known_types/timestamp", "lt_now/within/invalid/lt"),
         ("standard_rules/well_known_types/timestamp", "within/valid"),
     };
 

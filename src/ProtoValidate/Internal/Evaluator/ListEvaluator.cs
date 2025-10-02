@@ -19,12 +19,16 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class ListEvaluator : IEvaluator
 {
-    public ListEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor)
+    public ListEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
     {
         FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
-        
-        var ignore = fieldRules.Repeated?.Items?.CalculateIgnore(fieldDescriptor) ?? Ignore.Unspecified;
+        if (messageRules == null)
+        {
+            throw new ArgumentNullException(nameof(messageRules));
+        }
+
+        var ignore = fieldRules.Repeated?.Items?.CalculateIgnore(fieldDescriptor, messageRules) ?? Ignore.Unspecified;
         ItemConstraints = new ValueEvaluator(fieldRules, fieldDescriptor, ignore);
     }
 

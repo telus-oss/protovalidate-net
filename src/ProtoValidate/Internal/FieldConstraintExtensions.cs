@@ -24,7 +24,7 @@ namespace ProtoValidate.Internal
 {
     internal static class FieldConstraintExtensions
     {
-        public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor)
+        public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
         {
             if (fieldDescriptor == null)
             {
@@ -32,11 +32,18 @@ namespace ProtoValidate.Internal
             }
             if (fieldRules.Ignore == Ignore.Unspecified)
             {
+                // Note that adding a field to a `oneof` will also set the IfZeroValue on the fields. This means
+                // only the field that os set will be validated and the unset fields are not validated according to the field rules.
+                if (messageRules.Oneof.Any(messageRule => messageRule.Fields.Any(oneOfFieldName => string.Equals(fieldDescriptor.Name, oneOfFieldName, StringComparison.Ordinal))))
+                {
+                    return Ignore.IfZeroValue;
+                }
+
                 if (fieldDescriptor.HasPresence)
                 {
                     if (fieldDescriptor.ContainingType == null || !fieldDescriptor.ContainingType.IsMapEntry)
                     {
-                        return Ignore.IfUnpopulated;
+                        return Ignore.IfZeroValue;
                     }
                 }
             }

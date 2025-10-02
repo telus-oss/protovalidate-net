@@ -24,14 +24,18 @@ public class FieldEvaluator : IEvaluator
     public ValueEvaluator ValueEvaluator { get; }
     internal FieldDescriptor FieldDescriptor { get; }
     internal FieldRules FieldRules { get; }
-
+    
     internal Ignore Ignore { get; }
-    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldRules fieldRules)
+    public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldRules fieldRules, MessageRules messageRules)
     {
         ValueEvaluator = valueEvaluator ?? throw new ArgumentNullException(nameof(valueEvaluator));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
         FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
-        Ignore = fieldRules.CalculateIgnore(fieldDescriptor);
+        if (messageRules == null)
+        {
+            throw new ArgumentNullException(nameof(messageRules));
+        }
+        Ignore = fieldRules.CalculateIgnore(fieldDescriptor, messageRules);
     }
 
     public override string ToString()
@@ -49,7 +53,7 @@ public class FieldEvaluator : IEvaluator
         {
             return ValidationResult.Empty;
         }
-        
+
         if (Ignore == Ignore.Always)
         {
             return ValidationResult.Empty;
@@ -108,7 +112,7 @@ public class FieldEvaluator : IEvaluator
             });
         }
 
-        if ((Ignore == Ignore.IfUnpopulated || Ignore == Ignore.IfDefaultValue || FieldDescriptor.HasPresence) && !hasField)
+        if ((Ignore == Ignore.IfZeroValue || FieldDescriptor.HasPresence) && !hasField)
         {
             return ValidationResult.Empty;
         }

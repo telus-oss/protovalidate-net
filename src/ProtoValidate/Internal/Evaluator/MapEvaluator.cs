@@ -19,7 +19,7 @@ namespace ProtoValidate.Internal.Evaluator;
 
 public class MapEvaluator : IEvaluator
 {
-    public MapEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor)
+    public MapEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
     {
         if (fieldRules == null)
         {
@@ -41,8 +41,8 @@ public class MapEvaluator : IEvaluator
         var mapRulesKeysFieldRules = mapRules?.Keys ?? new FieldRules();
         var mapRulesValuesFieldRules = mapRules?.Values ?? new FieldRules();
 
-        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldRules, keyDescriptor, mapRulesKeysFieldRules.CalculateIgnore(keyDescriptor));
-        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldRules, valueDescriptor, mapRulesValuesFieldRules.CalculateIgnore(valueDescriptor));
+        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldRules, keyDescriptor, mapRulesKeysFieldRules.CalculateIgnore(keyDescriptor, messageRules));
+        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldRules, valueDescriptor, mapRulesValuesFieldRules.CalculateIgnore(valueDescriptor, messageRules));
     }
 
     public ValueEvaluator KeyEvaluator { get; }
