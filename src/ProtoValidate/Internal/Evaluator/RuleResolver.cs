@@ -45,16 +45,7 @@ public class RuleResolver
         {
             return new MessageRules();
         }
-
-        var disabled = messageConstraints.Disabled;
-        if (disabled)
-        {
-            return new MessageRules
-            {
-                Disabled = true
-            };
-        }
-
+        
         return messageConstraints;
     }
 
@@ -73,7 +64,7 @@ public class RuleResolver
 
         return options.GetExtension(ValidateExtensions.Oneof);
     }
-
+    
     public FieldRules ResolveFieldRules(FieldDescriptor descriptor)
     {
         var options = descriptor.GetOptions();
@@ -88,7 +79,7 @@ public class RuleResolver
         {
             if (descriptor.HasPresence)
             {
-                fieldRules.Ignore = Ignore.IfUnpopulated;
+                fieldRules.Ignore = Ignore.IfZeroValue;
             }
         }
 

@@ -62,7 +62,7 @@ public class ValueEvaluator : IEvaluator
             return ValidationResult.Empty;
         }
 
-        if (Ignore == Ignore.IfUnpopulated && IsDefaultValue(value?.Value<object?>()))
+        if (Ignore == Ignore.IfZeroValue && IsDefaultValue(value?.Value<object?>()))
         {
             if (!FieldDescriptor.HasPresence)
             {
@@ -72,11 +72,6 @@ public class ValueEvaluator : IEvaluator
             {
                 return ValidationResult.Empty;
             }
-        }
-
-        if (Ignore == Ignore.IfDefaultValue && IsDefaultValue(value?.Value<object?>()))
-        {
-            return ValidationResult.Empty;
         }
 
         var field = new FieldPath();
@@ -112,7 +107,12 @@ public class ValueEvaluator : IEvaluator
         return new ValidationResult(violations);
     }
 
-    internal bool IsDefaultValue(object? val)
+    private bool IsDefaultValue(object? val)
+    {
+        return IsDefaultValue(val, DefaultValue);
+    }
+
+    public static bool IsDefaultValue(object? val, object? defaultValue)
     {
         if (val == null)
         {
@@ -123,11 +123,11 @@ public class ValueEvaluator : IEvaluator
         {
             if (val is string stringFieldValue)
             {
-                if (string.IsNullOrEmpty(DefaultValue?.ToString()) && string.IsNullOrEmpty(stringFieldValue))
+                if (string.IsNullOrEmpty(defaultValue?.ToString()) && string.IsNullOrEmpty(stringFieldValue))
                 {
                     return true;
                 }
-                if (string.Equals(DefaultValue?.ToString(), stringFieldValue, StringComparison.Ordinal))
+                if (string.Equals(defaultValue?.ToString(), stringFieldValue, StringComparison.Ordinal))
                 {
                     return true;
                 }
@@ -150,7 +150,7 @@ public class ValueEvaluator : IEvaluator
                 }
             }
 
-            if (ValueEquality(val, DefaultValue))
+            if (ValueEquality(val, defaultValue))
             {
                 return true;
             }

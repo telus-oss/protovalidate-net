@@ -132,15 +132,12 @@ public class EvaluatorBuilder
             var defaultInstance = messageDescriptor.Parser.ParseFrom(Array.Empty<byte>());
 
             // var descriptor = defaultInstance.Descriptor;
-            var messageConstraints = RuleResolver.ResolveMessageRules(messageDescriptor);
-            if (messageConstraints.Disabled)
-            {
-                return;
-            }
+            var messageRules = RuleResolver.ResolveMessageRules(messageDescriptor);
 
-            ProcessMessageExpressions(messageDescriptor, messageConstraints, messageEvaluator, defaultInstance);
-            ProcessOneofConstraints(messageDescriptor, messageEvaluator);
-            ProcessFields(messageDescriptor, messageEvaluator, nestedMessageEvaluators);
+            ProcessMessageExpressions(messageDescriptor, messageRules, messageEvaluator, defaultInstance);
+            ProcessMessageOneofRules(messageDescriptor, messageRules, messageEvaluator);
+            ProcessOneofRules(messageDescriptor, messageEvaluator);
+            ProcessFields(messageDescriptor, messageRules, messageEvaluator, nestedMessageEvaluators);
         }
         catch (InvalidProtocolBufferException e)
         {
@@ -148,7 +145,16 @@ public class EvaluatorBuilder
         }
     }
 
-    internal void ProcessOneofConstraints(MessageDescriptor desc, MessageEvaluator msgEval)
+    internal void ProcessMessageOneofRules(MessageDescriptor messageDescriptor, MessageRules messageRules, MessageEvaluator messageEvaluator)
+    {
+        foreach (var messageOneofRule in messageRules.Oneof)
+        {
+            var oneofEvaluatorEval = new MessageOneofEvaluator(messageDescriptor, messageOneofRule);
+            messageEvaluator.AddEvaluator(oneofEvaluatorEval);
+        }
+    }
+
+    internal void ProcessOneofRules(MessageDescriptor desc, MessageEvaluator msgEval)
     {
         var oneofs = desc.Oneofs;
         if (oneofs == null)
@@ -158,45 +164,45 @@ public class EvaluatorBuilder
 
         foreach (var oneofDesc in oneofs)
         {
-            var oneofConstraints = RuleResolver.ResolveOneofRules(oneofDesc);
-            var oneofEvaluatorEval = new OneofEvaluator(oneofDesc, oneofConstraints.Required);
+            var oneofRules = RuleResolver.ResolveOneofRules(oneofDesc);
+            var oneofEvaluatorEval = new OneofEvaluator(oneofDesc, oneofRules.Required);
             msgEval.AddEvaluator(oneofEvaluatorEval);
         }
     }
 
-    internal void ProcessFields(MessageDescriptor messageDescriptor, MessageEvaluator messageEvaluator, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessFields(MessageDescriptor messageDescriptor, MessageRules messageRules, MessageEvaluator messageEvaluator, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         var fieldDescriptors = messageDescriptor.Fields.InDeclarationOrder();
         foreach (var fieldDescriptor in fieldDescriptors)
         {
             var fieldRules = RuleResolver.ResolveFieldRules(fieldDescriptor);
 
-            var fieldEvaluator = BuildField(fieldDescriptor, fieldRules, nestedMessageEvaluators);
+            var fieldEvaluator = BuildField(fieldDescriptor, fieldRules, messageRules, nestedMessageEvaluators);
             messageEvaluator.AddEvaluator(fieldEvaluator);
         }
     }
 
-    internal FieldEvaluator BuildField(FieldDescriptor fieldDescriptor, FieldRules fieldRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal FieldEvaluator BuildField(FieldDescriptor fieldDescriptor, FieldRules fieldRules, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
-        var valueEvaluatorEval = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor));
+        var valueEvaluatorEval = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules));
 
-        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldRules);
-        BuildValue(fieldDescriptor, fieldRules, false, fieldEvaluator.ValueEvaluator, nestedMessageEvaluators);
+        var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldRules, messageRules);
+        BuildValue(fieldDescriptor, fieldRules, false, fieldEvaluator.ValueEvaluator, messageRules, nestedMessageEvaluators);
         return fieldEvaluator;
     }
 
-    internal void BuildValue(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluator, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void BuildValue(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluator, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         ProcessFieldExpressions(fieldRules, valueEvaluator);
-        ProcessEmbeddedMessage(fieldDescriptor, fieldRules, forItems, valueEvaluator, nestedMessageEvaluators);
-        ProcessWrapperConstraints(fieldDescriptor, fieldRules, forItems, valueEvaluator, nestedMessageEvaluators);
-        ProcessStandardConstraints(fieldDescriptor, fieldRules, forItems, valueEvaluator);
-        ProcessAnyConstraints(fieldDescriptor, fieldRules, forItems, valueEvaluator);
-        ProcessEnumConstraints(fieldDescriptor, fieldRules, valueEvaluator);
-        ProcessMapConstraints(fieldDescriptor, fieldRules, valueEvaluator, nestedMessageEvaluators);
-        ProcessRepeatedConstraints(fieldDescriptor, fieldRules, forItems, valueEvaluator, nestedMessageEvaluators);
+        ProcessEmbeddedMessage(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessWrapperRules(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessStandardRules(fieldDescriptor, fieldRules, forItems, valueEvaluator);
+        ProcessAnyRules(fieldDescriptor, fieldRules, forItems, valueEvaluator);
+        ProcessEnumRules(fieldDescriptor, fieldRules, valueEvaluator);
+        ProcessMapRules(fieldDescriptor, fieldRules, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessRepeatedRules(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
     }
 
     internal void ProcessFieldExpressions(FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
@@ -214,13 +220,13 @@ public class EvaluatorBuilder
         }
     }
 
-    internal void ProcessEmbeddedMessage(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessEmbeddedMessage(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
 
         if (fieldDescriptor.FieldType != FieldType.Message
-            || (fieldRules.CalculateIgnore(fieldDescriptor) == Ignore.Always)
+            || (fieldRules.CalculateIgnore(fieldDescriptor, messageRules) == Ignore.Always)
             || fieldDescriptor.IsMap
             || (fieldDescriptor.IsRepeated && !forItems)
             || GoogleWellKnownTypes.Contains(fieldDescriptor.MessageType.FullName))
@@ -236,10 +242,10 @@ public class EvaluatorBuilder
         valueEvaluatorEval.AddEvaluator(embedEval);
     }
 
-    internal void ProcessWrapperConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessWrapperRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         if (fieldDescriptor.FieldType != FieldType.Message
-            || (fieldRules.CalculateIgnore(fieldDescriptor) == Ignore.Always)
+            || (fieldRules.CalculateIgnore(fieldDescriptor, messageRules) == Ignore.Always)
             || fieldDescriptor.IsMap
             || (fieldDescriptor.IsRepeated && !forItems))
         {
@@ -265,12 +271,12 @@ public class EvaluatorBuilder
             return;
         }
 
-        var unwrapped = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor));
-        BuildValue(valueFieldDescriptor, fieldRules, true, unwrapped, nestedMessageEvaluators);
+        var unwrapped = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules));
+        BuildValue(valueFieldDescriptor, fieldRules, true, unwrapped, messageRules, nestedMessageEvaluators);
         valueEvaluatorEval.AddEvaluator(unwrapped);
     }
 
-    internal void ProcessAnyConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessAnyRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
     {
         if ((fieldDescriptor.IsRepeated && !forItems)
             || fieldDescriptor.FieldType != FieldType.Message
@@ -294,7 +300,7 @@ public class EvaluatorBuilder
         valueEvaluatorEval.AddEvaluator(anyEvaluatorEval);
     }
 
-    internal void ProcessEnumConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessEnumRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
         if (fieldDescriptor.FieldType != FieldType.Enum)
         {
@@ -308,24 +314,24 @@ public class EvaluatorBuilder
         }
     }
 
-    internal void ProcessMapConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessMapRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         if (!fieldDescriptor.IsMap)
         {
             return;
         }
-        
+
         var mapKeyFieldRules = fieldRules.Map?.Keys ?? new FieldRules();
         var mapValuesFieldRules = fieldRules.Map?.Values ?? new FieldRules();
 
-        var mapEval = new MapEvaluator(fieldRules, fieldDescriptor);
-        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), mapKeyFieldRules, true, mapEval.KeyEvaluator, nestedMessageEvaluators);
-        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), mapValuesFieldRules, true, mapEval.ValueEvaluator, nestedMessageEvaluators);
+        var mapEval = new MapEvaluator(fieldRules, fieldDescriptor, messageRules);
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), mapKeyFieldRules, true, mapEval.KeyEvaluator, messageRules, nestedMessageEvaluators);
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), mapValuesFieldRules, true, mapEval.ValueEvaluator, messageRules, nestedMessageEvaluators);
 
         valueEvaluatorEval.AddEvaluator(mapEval);
     }
 
-    internal void ProcessRepeatedConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessRepeatedRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
     {
         if (fieldDescriptor.IsMap || !fieldDescriptor.IsRepeated || forItems)
         {
@@ -334,12 +340,12 @@ public class EvaluatorBuilder
 
         var repeatedFieldRules = fieldRules.Repeated?.Items ?? new FieldRules();
 
-        var listEval = new ListEvaluator(fieldRules, fieldDescriptor);
-        BuildValue(fieldDescriptor, repeatedFieldRules, true, listEval.ItemConstraints, nestedMessageEvaluators);
+        var listEval = new ListEvaluator(fieldRules, fieldDescriptor, messageRules);
+        BuildValue(fieldDescriptor, repeatedFieldRules, true, listEval.ItemConstraints, messageRules, nestedMessageEvaluators);
         valueEvaluatorEval.AddEvaluator(listEval);
     }
 
-    internal void ProcessStandardConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessStandardRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
     {
         var compile = Constraints.Compile(fieldDescriptor, fieldRules, forItems);
         if (compile.Count == 0)
