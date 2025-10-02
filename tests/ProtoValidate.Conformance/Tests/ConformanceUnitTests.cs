@@ -92,17 +92,17 @@ public class ConformanceUnitTests
         var testCases = ConformanceUnitTestParser.GetTestCases();
         foreach (var testCase in testCases)
         {
-            if (!string.Equals("library/is_uri", testCase.SuiteName, StringComparison.Ordinal))
+            if (!string.Equals("library/is_uri_ref", testCase.SuiteName, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            if (!testCase.CaseName.StartsWith("valid/", StringComparison.Ordinal))
+            if (!testCase.CaseName.StartsWith("invalid/", StringComparison.Ordinal))
             {
                 continue;
             }
 
-            var testData = (IsUri)testCase!.Input?.Unpack(TypeRegistry)!;
+            var testData = (IsUriRef)testCase!.Input?.Unpack(TypeRegistry)!;
 
             Console.WriteLine($"[TestCase(\"{testData.Val}\")]");
         }
