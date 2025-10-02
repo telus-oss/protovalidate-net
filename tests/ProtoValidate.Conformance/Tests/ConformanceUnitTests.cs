@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using Buf.Validate;
-using Buf.Validate.Conformance.Cases;
 using Buf.Validate.Conformance.Harness;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -87,28 +86,6 @@ public class ConformanceUnitTests
     }
 
     [Test]
-    public void UriTestFetcher()
-    {
-        var testCases = ConformanceUnitTestParser.GetTestCases();
-        foreach (var testCase in testCases)
-        {
-            if (!string.Equals("library/is_uri_ref", testCase.SuiteName, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (!testCase.CaseName.StartsWith("invalid/", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var testData = (IsUriRef)testCase!.Input?.Unpack(TypeRegistry)!;
-
-            Console.WriteLine($"[TestCase(\"{testData.Val}\")]");
-        }
-    }
-
-    [Test]
     [TestCaseSource(typeof(ConformanceUnitTestParser), nameof(ConformanceUnitTestParser.GetTestCases), Category = "Conformance Unit Tests")]
     public void SimpleTest(ConformanceUnitTestCase testCase)
     {
@@ -136,7 +113,7 @@ public class ConformanceUnitTests
         {
             if (testCase.CaseResult != null)
             {
-                var testCaseJson = Google.Protobuf.JsonFormatter.Default.Format(testCase.CaseResult);
+                var testCaseJson = JsonFormatter.Default.Format(testCase.CaseResult);
                 Console.WriteLine(testCaseJson);
             }
 
@@ -172,7 +149,9 @@ public class ConformanceUnitTests
             {
                 inputJson = formatter.Format(testData);
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException)
+            {
+            }
 
             Console.WriteLine("Input");
             Console.WriteLine(testData.GetType().Name);
@@ -215,6 +194,7 @@ public class ConformanceUnitTests
             Assert.That(testCase.ExpectedResult?.ValidationError?.Violations_.Count ?? 0, Is.EqualTo(testResults?.ValidationError?.Violations_.Count ?? 0));
         }
     }
+
     [Test]
     [TestCaseSource(typeof(ConformanceUnitTestParser), nameof(ConformanceUnitTestParser.GetTestCases), Category = "Conformance Unit Tests")]
     public void SimpleTestFailFast(ConformanceUnitTestCase testCase)
@@ -248,7 +228,6 @@ public class ConformanceUnitTests
             Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
             Assert.That(testResults.HasUnexpectedError, Is.True);
-            
         }
         else if (testCase.ExpectedResult.HasRuntimeError)
         {
