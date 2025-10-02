@@ -353,106 +353,106 @@ public class FunctionsTest
     }
 
     [Test]
-    [TestCase("https://!$&'()*+,;=@example.com")]
-    [TestCase("https://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]")]
-    [TestCase("https://example.com:")]
-    [TestCase("https://example.com#%c3x%96")]
-    [TestCase("https://example.com?#frag")]
-    [TestCase("https://joe@example.com/foo")]
-    [TestCase("https://example.com#!$&'()*+,;=")]
-    [TestCase("https:///@example.com")]
-    [TestCase("https://[::1%25eth0]")]
-    [TestCase("https://example.com:1")]
-    [TestCase("foo://example.com/")]
-    [TestCase("foo://example.com/%c3x%96")]
-    [TestCase("foo:nz?q#f")]
-    [TestCase("https://!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]
-    [TestCase("https://example.com:0")]
-    [TestCase("foo:/%c3%96")]
-    [TestCase("foo:/nz/%c3%96%c3")]
-    [TestCase("foo:nz/a")]
-    [TestCase("https://example.com/foo/bar?baz=quux#frag")]
-    [TestCase("foo0123456789azAZ+-.://example.com")]
-    [TestCase("https://[v1.x]")]
-    [TestCase("foo:/nz/%c3x%96")]
-    [TestCase("foo://example.com/%61%20%23")]
-    [TestCase("ftp://example.com")]
-    [TestCase("https://foo")]
-    [TestCase("https://example.com:65536")]
-    [TestCase("https://user:password@example.com")]
-    [TestCase("https://#@example.com")]
-    [TestCase("https://foo%c3%96")]
-    [TestCase("foo:/nz/%61%20%23")]
-    [TestCase("foo:nz/")]
-    [TestCase("foo:%c3%96")]
-    [TestCase("foo://example.com")]
-    [TestCase("https://example.com/foo/bar/")]
-    [TestCase("https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@example.com")]
-    [TestCase("foo:nz/%61%20%23")]
-    [TestCase("https://[v1234AF.x]")]
-    [TestCase("https://[vF.-!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]")]
-    [TestCase("https://example.com:65535")]
-    [TestCase("foo:/nz/a")]
-    [TestCase("https://foo%61%20%23")]
-    [TestCase("https://example.com/foo")]
-    [TestCase("foo:@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
-    [TestCase("foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
-    [TestCase("foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
-    [TestCase("https://example.com")]
-    [TestCase("foo:/%c3x%96")]
-    [TestCase("foo:nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
-    [TestCase("https://example.com#%61%20%23")]
-    [TestCase("https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~@example.com")]
-    [TestCase("https://[::1%25foo%61%20%23]")]
-    [TestCase("foo:/@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
-    [TestCase("foo:nz//segment//segment/")]
-    [TestCase("foo:")]
-    [TestCase("foo:?q#f")]
-    [TestCase("https://:")]
-    [TestCase("foo://example.com/segment//segment/")]
-    [TestCase("https://example.com?%c3x%96")]
-    [TestCase("A://")]
-    [TestCase("https://example.com?%61%20%23")]
-    [TestCase("https://example.com?a=b&c&&=1&==")]
-    [TestCase("https://:@example.com")]
-    [TestCase("foo://example.com/a")]
-    [TestCase("https://example.com#/?")]
-    [TestCase("foo:/nz")]
-    [TestCase("foo:nz/%c3x%96")]
-    [TestCase("https://example.com?baz=quux")]
-    [TestCase("https://example.com?;")]
-    [TestCase("https://example.com/#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
-    [TestCase("https://example.com/foo/bar")]
-    [TestCase("https://127.0.0.1")]
-    [TestCase("https://example.com?!$&'()*+,=")]
-    [TestCase("https://user@example.com")]
-    [TestCase("https://example.com:8080")]
-    [TestCase("https://%c3%963@example.com")]
-    [TestCase("foo:/nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
-    [TestCase("foo:%c3x%96")]
-    [TestCase("foo://example.com/%c3%96")]
-    [TestCase("https://%61%20%23@example.com")]
-    [TestCase("https://:8080")]
-    [TestCase("foo:/nz?q#f")]
-    [TestCase("foo:/%61%20%23")]
-    [TestCase("foo:nz/%c3%96")]
-    [TestCase("scheme0123456789azAZ+-.://userinfo0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@host!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789/path0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20//foo/?query0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?#fragment0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
-    [TestCase("https://%c3x%963@example.com")]
-    [TestCase("https://?@example.com")]
-    [TestCase("https://256.0.0.1")]
-    [TestCase("foo:/nz/")]
-    [TestCase("foo:nz")]
-    [TestCase("https://:::@example.com")]
-    [TestCase("https://[::1%25foo%c3%96]")]
-    [TestCase("https://example.com/foo/bar")]
-    [TestCase("https://example.com?%c3%96%c3")]
-    [TestCase("https://example.com?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
-    [TestCase("https://example.com/foo")]
-    [TestCase("foo:%61%20%23")]
-    [TestCase("https://example.com?/?")]
-    [TestCase("https://example.com#%c3%96")]
-    [TestCase("foo:/nz//segment//segment/")]
-    [TestCase("https://example.com?:@")]
+    [TestCase(@"https://!$&'()*+,;=@example.com")]
+    [TestCase(@"https://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]")]
+    [TestCase(@"https://example.com:")]
+    [TestCase(@"https://example.com#%c3x%96")]
+    [TestCase(@"https://example.com?#frag")]
+    [TestCase(@"https://joe@example.com/foo")]
+    [TestCase(@"https://example.com#!$&'()*+,;=")]
+    [TestCase(@"https:///@example.com")]
+    [TestCase(@"https://[::1%25eth0]")]
+    [TestCase(@"https://example.com:1")]
+    [TestCase(@"foo://example.com/")]
+    [TestCase(@"foo://example.com/%c3x%96")]
+    [TestCase(@"foo:nz?q#f")]
+    [TestCase(@"https://!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")]
+    [TestCase(@"https://example.com:0")]
+    [TestCase(@"foo:/%c3%96")]
+    [TestCase(@"foo:/nz/%c3%96%c3")]
+    [TestCase(@"foo:nz/a")]
+    [TestCase(@"https://example.com/foo/bar?baz=quux#frag")]
+    [TestCase(@"foo0123456789azAZ+-.://example.com")]
+    [TestCase(@"https://[v1.x]")]
+    [TestCase(@"foo:/nz/%c3x%96")]
+    [TestCase(@"foo://example.com/%61%20%23")]
+    [TestCase(@"ftp://example.com")]
+    [TestCase(@"https://foo")]
+    [TestCase(@"https://example.com:65536")]
+    [TestCase(@"https://user:password@example.com")]
+    [TestCase(@"https://#@example.com")]
+    [TestCase(@"https://foo%c3%96")]
+    [TestCase(@"foo:/nz/%61%20%23")]
+    [TestCase(@"foo:nz/")]
+    [TestCase(@"foo:%c3%96")]
+    [TestCase(@"foo://example.com")]
+    [TestCase(@"https://example.com/foo/bar/")]
+    [TestCase(@"https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@example.com")]
+    [TestCase(@"foo:nz/%61%20%23")]
+    [TestCase(@"https://[v1234AF.x]")]
+    [TestCase(@"https://[vF.-!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]")]
+    [TestCase(@"https://example.com:65535")]
+    [TestCase(@"foo:/nz/a")]
+    [TestCase(@"https://foo%61%20%23")]
+    [TestCase(@"https://example.com/foo")]
+    [TestCase(@"foo:@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
+    [TestCase(@"foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase(@"foo://example.com/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase(@"https://example.com")]
+    [TestCase(@"foo:/%c3x%96")]
+    [TestCase(@"foo:nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase(@"https://example.com#%61%20%23")]
+    [TestCase(@"https://0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~@example.com")]
+    [TestCase(@"https://[::1%25foo%61%20%23]")]
+    [TestCase(@"foo:/@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
+    [TestCase(@"foo:nz//segment//segment/")]
+    [TestCase(@"foo:")]
+    [TestCase(@"foo:?q#f")]
+    [TestCase(@"https://:")]
+    [TestCase(@"foo://example.com/segment//segment/")]
+    [TestCase(@"https://example.com?%c3x%96")]
+    [TestCase(@"A://")]
+    [TestCase(@"https://example.com?%61%20%23")]
+    [TestCase(@"https://example.com?a=b&c&&=1&==")]
+    [TestCase(@"https://:@example.com")]
+    [TestCase(@"foo://example.com/a")]
+    [TestCase(@"https://example.com#/?")]
+    [TestCase(@"foo:/nz")]
+    [TestCase(@"foo:nz/%c3x%96")]
+    [TestCase(@"https://example.com?baz=quux")]
+    [TestCase(@"https://example.com?;")]
+    [TestCase(@"https://example.com/#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"https://example.com/foo/bar")]
+    [TestCase(@"https://127.0.0.1")]
+    [TestCase(@"https://example.com?!$&'()*+,=")]
+    [TestCase(@"https://user@example.com")]
+    [TestCase(@"https://example.com:8080")]
+    [TestCase(@"https://%c3%963@example.com")]
+    [TestCase(@"foo:/nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase(@"foo:%c3x%96")]
+    [TestCase(@"foo://example.com/%c3%96")]
+    [TestCase(@"https://%61%20%23@example.com")]
+    [TestCase(@"https://:8080")]
+    [TestCase(@"foo:/nz?q#f")]
+    [TestCase(@"foo:/%61%20%23")]
+    [TestCase(@"foo:nz/%c3%96")]
+    [TestCase(@"scheme0123456789azAZ+-.://userinfo0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@host!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789/path0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20//foo/?query0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?#fragment0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"https://%c3x%963@example.com")]
+    [TestCase(@"https://?@example.com")]
+    [TestCase(@"https://256.0.0.1")]
+    [TestCase(@"foo:/nz/")]
+    [TestCase(@"foo:nz")]
+    [TestCase(@"https://:::@example.com")]
+    [TestCase(@"https://[::1%25foo%c3%96]")]
+    [TestCase(@"https://example.com/foo/bar")]
+    [TestCase(@"https://example.com?%c3%96%c3")]
+    [TestCase(@"https://example.com?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase(@"https://example.com/foo")]
+    [TestCase(@"foo:%61%20%23")]
+    [TestCase(@"https://example.com?/?")]
+    [TestCase(@"https://example.com#%c3%96")]
+    [TestCase(@"foo:/nz//segment//segment/")]
+    [TestCase(@"https://example.com?:@")]
 
     public void IsUri_Valid_ReturnsTrue(string uri)
     {
@@ -462,168 +462,137 @@ public class FunctionsTest
     #endregion
 
     #region IsUriRef Tests
-
     [Test]
-    public void IsUriRef_WithAbsoluteUri_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "https://example.com" });
-        Assert.That(result, Is.EqualTo(true));
-    }
+    [TestCase(@":")]
+    [TestCase(@"/nz/%x")]
+    [TestCase(@"##")]
+    [TestCase(@"/\u001f")]
+    [TestCase(@"/%x")]
+    [TestCase(@"/?%")]
+    [TestCase(@"?%")]
+    [TestCase(@"/nz/^")]
+    [TestCase(@".##")]
+    [TestCase(@"/foo/\u001f")]
+    [TestCase(@"1foo://example.com")]
+    [TestCase(@".#^")]
+    [TestCase(@"#^")]
+    [TestCase(@"//host#%")]
+    [TestCase(@"/^")]
+    [TestCase(@"/nz/\u001f")]
+    [TestCase(@"?\u001f")]
+    [TestCase(@"//host/\u001f")]
+    [TestCase(@"%x")]
+    [TestCase(@".?\u001f")]
+    [TestCase(@" ./foo")]
+    [TestCase(@".?^")]
+    [TestCase(@"/#\u001f")]
+    [TestCase(@"//host#^")]
+    [TestCase(@"/?^")]
+    [TestCase(@"./foo ")]
+    [TestCase(@"./%x")]
+    [TestCase(@".#%")]
+    [TestCase(@"//host?\u001f")]
+    [TestCase(@"//host##")]
+    [TestCase(@"/##")]
+    [TestCase(@"./foo/\u001f")]
+    [TestCase(@"//host#\u001f")]
+    [TestCase(@"\u001f")]
+    [TestCase(@".?%")]
+    [TestCase(@"#%")]
+    [TestCase(@":")]
+    [TestCase(@".#\u001f")]
+    [TestCase(@"./\u001f")]
+    [TestCase(@"//host/%x")]
+    [TestCase(@"#\u001f")]
+    [TestCase(@"^")]
+    [TestCase(@"./^")]
+    [TestCase(@" ")]
+    [TestCase(@"//host?^")]
+    [TestCase(@"/#^")]
+    [TestCase(@"/#%")]
+    [TestCase(@"//host?%")]
+    [TestCase(@"/?\u001f")]
+    [TestCase(@"?^")]
 
-    [Test]
-    public void IsUriRef_WithRelativeReference_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "/path/to/resource" });
-        Assert.That(result, Is.EqualTo(true));
-    }
 
-    [Test]
-    public void IsUriRef_WithQueryString_ReturnsTrue()
+    public void IsUriRef_Invalid_ReturnsFalse(string uriRef)
     {
-        var result = Functions.IsUriRef(new object[] { "?query=value" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithFragment_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "#fragment" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithRelativePathAndQuery_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "path/to/resource?query=value" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithRelativePathAndFragment_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "path/to/resource#fragment" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithRelativePathQueryAndFragment_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "path/to/resource?query=value#fragment" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithAuthorityAndPath_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//example.com/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithAuthorityOnly_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//example.com" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithAuthorityAndQuery_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//example.com?query=value" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithCurrentDirectory_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "./" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithParentDirectory_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "../" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithEmptyString_ReturnsFalse()
-    {
-        var result = Functions.IsUriRef(new object[] { "" });
+        var result = Functions.IsUriRef(new object[] { uriRef });
         Assert.That(result, Is.EqualTo(false));
     }
 
     [Test]
-    public void IsUriRef_WithPercentEncoding_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "path%20with%20spaces" });
-        Assert.That(result, Is.EqualTo(true));
-    }
+    [TestCase(@"//host/%61%20%23")]
+    [TestCase(@"")]
+    [TestCase(@"//[::1]")]
+    [TestCase(@"#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"//host//")]
+    [TestCase(@"/nz")]
+    [TestCase(@"/%c3%96")]
+    [TestCase(@"./%c3%96")]
+    [TestCase(@"")]
+    [TestCase(@"%c3%96")]
+    [TestCase(@"./%c3x%96")]
+    [TestCase(@".?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase(@"//host/a/b/c/")]
+    [TestCase(@"*")]
+    [TestCase(@"//host#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"/foo/bar?baz=quux")]
+    [TestCase(@"./foo/bar")]
+    [TestCase(@"./foo")]
+    [TestCase(@"./0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20")]
+    [TestCase(@"/:")]
+    [TestCase(@"@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~")]
+    [TestCase(@"//host/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&()*+,;=:@")]
+    [TestCase(@"./%61%20%23")]
+    [TestCase(@"./a/b/c/")]
+    [TestCase(@".?baz=quux")]
+    [TestCase(@"./foo/bar?baz=quux")]
+    [TestCase(@"//host/a/b/c")]
+    [TestCase(@"//host/foo/bar#frag")]
+    [TestCase(@"/%61%20%23")]
+    [TestCase(@"//host?baz=quux")]
+    [TestCase(@"./foo/bar?baz=quux#frag")]
+    [TestCase(@"//host#frag")]
+    [TestCase(@"/nz/")]
+    [TestCase(@"%61%20%23")]
+    [TestCase(@"./foo")]
+    [TestCase(@"/?baz=quux")]
+    [TestCase(@"//0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@example.com")]
+    [TestCase(@"/@%20!$&()*+,;=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~:")]
+    [TestCase(@"./foo/bar#frag")]
+    [TestCase(@"//host")]
+    [TestCase(@"//host/%c3x%96")]
+    [TestCase(@"//host?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase(@"/#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase(@"/foo/bar#frag")]
+    [TestCase(@"/?0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?")]
+    [TestCase(@"/nz/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&()*+,;=:@")]
+    [TestCase(@"//host/foo/bar?baz=quux")]
+    [TestCase(@"/nz/%c3x%96")]
+    [TestCase(@"//127.0.0.1")]
+    [TestCase(@"/nz/%61%20%23")]
+    [TestCase(@"./a/b/c")]
+    [TestCase(@".///")]
+    [TestCase(@"/%c3x%96")]
+    [TestCase(@"/nz/%c3%96")]
+    [TestCase(@".#0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"//host:8080")]
+    [TestCase(@"//host/%c3%96")]
+    [TestCase(@"/")]
+    [TestCase(@"//host/")]
+    [TestCase(@"/#frag")]
+    [TestCase(@"./")]
+    [TestCase(@".#frag")]
+    [TestCase(@"//userinfo0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~!$&'()*+,;=::@host!$&'()*+,;=._~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:0123456789/path0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%20!$&'()*+,;=:@%20//foo/?query0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?#fragment0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~%20!$&'()*+,=;:@?/")]
+    [TestCase(@"//host/foo?baz=quux#frag")]
+    [TestCase(@"%c3x%96")]
 
-    [Test]
-    public void IsUriRef_WithInvalidPercentEncoding_ReturnsFalse()
-    {
-        var result = Functions.IsUriRef(new object[] { "path%ZZ" });
-        Assert.That(result, Is.EqualTo(false));
-    }
 
-    [Test]
-    public void IsUriRef_WithDotSegments_ReturnsTrue()
+    public void IsUriRef_Valid_ReturnsTrue(string uriRef)
     {
-        var result = Functions.IsUriRef(new object[] { "./path/../other" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithColonInFirstSegment_ReturnsTrue()
-    {
-        // This is actually a valid URI with scheme "name" - RFC 3986 allows this
-        var result = Functions.IsUriRef(new object[] { "name:value/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithInvalidSchemeAndColonInPath_ReturnsFalse()
-    {
-        // This should fail as a URI (invalid scheme starting with digit)
-        // and fail as relative reference (colon in first segment)
-        var result = Functions.IsUriRef(new object[] { "123:invalid" });
-        Assert.That(result, Is.EqualTo(false));
-    }
-
-    [Test]
-    public void IsUriRef_WithIPv6Authority_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//[2001:db8::1]/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithIPv6AuthorityAndZoneId_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//[fe80::1%25eth0]/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithUserInfoInAuthority_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//user:pass@example.com/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithPortInAuthority_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//example.com:8080/path" });
-        Assert.That(result, Is.EqualTo(true));
-    }
-
-    [Test]
-    public void IsUriRef_WithCompleteAuthority_ReturnsTrue()
-    {
-        var result = Functions.IsUriRef(new object[] { "//user:pass@example.com:8080/path?query=value#fragment" });
+        var result = Functions.IsUriRef(new object[] { uriRef });
         Assert.That(result, Is.EqualTo(true));
     }
 

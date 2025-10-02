@@ -820,13 +820,25 @@ public static class Functions
     {
         if (string.IsNullOrEmpty(uriRefString))
         {
-            return false;
+            return true;
         }
 
         try
         {
             // Check for invalid percent encoding first
             if (!IsValidPercentEncoding(uriRefString))
+            {
+                return false;
+            }
+
+            // Check for invalid unescaped characters that should be percent-encoded
+            if (ContainsInvalidUnescapedCharacters(uriRefString))
+            {
+                return false;
+            }
+
+            // Check for invalid syntax patterns
+            if (ContainsInvalidSyntaxPatterns(uriRefString))
             {
                 return false;
             }
