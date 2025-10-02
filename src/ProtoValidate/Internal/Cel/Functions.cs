@@ -618,10 +618,10 @@ public static class Functions
 
         if (isHostNameInBrackets)
         {
-            return IsIP(host, 6) && ValidatePort(port, true);
+            return IsIP(host, 6) && ValidatePort(port);
         }
 
-        return (IsHostname(host) || IsIP(host, 4)) && ValidatePort(port, true);
+        return (IsHostname(host) || IsIP(host, 4)) && ValidatePort(port);
     }
 
 
@@ -1101,7 +1101,7 @@ public static class Functions
         // Validate port if present
         if (!string.IsNullOrEmpty(port))
         {
-            if (!ValidatePort(port, false))
+            if (!ValidateUriAuthorityPort(port))
             {
                 return false;
             }
@@ -1308,18 +1308,18 @@ public static class Functions
         return true;
     }
 
-   
+
     /// <summary>
     ///     Validates a port number for a uri authority
     /// </summary>
-    private static bool ValidatePort(string port , bool validatePortRange)
+    private static bool ValidatePort(string port)
     {
         if (string.IsNullOrEmpty(port))
         {
-            return false; 
+            return false;
         }
 
-        
+
         if (int.TryParse(port, NumberStyles.Integer, CultureInfo.InvariantCulture, out var portNum))
         {
             if (!string.Equals(port, portNum.ToString("0", CultureInfo.InvariantCulture)))
@@ -1328,12 +1328,7 @@ public static class Functions
                 return false;
             }
 
-            if (validatePortRange && portNum > 65535)
-            {
-                return false;
-            }
-
-            if (portNum >= 0 )
+            if (portNum >= 0 && portNum <= 65535)
             {
                 return true;
             }
@@ -1341,6 +1336,35 @@ public static class Functions
 
         return false;
     }
+
+    /// <summary>
+    ///     Validates a port number for a uri authority
+    /// </summary>
+    private static bool ValidateUriAuthorityPort(string port)
+    {
+        if (string.IsNullOrEmpty(port))
+        {
+            return true; // Empty port is valid in authority (just the colon)
+        }
+
+        // Port must be all digits
+        foreach (var c in port)
+        {
+            if (!char.IsDigit(c))
+            {
+                return false;
+            }
+        }
+
+        // Convert to number and check range
+        if (int.TryParse(port, NumberStyles.None, CultureInfo.InvariantCulture, out var portNumber))
+        {
+            return portNumber >= 0;
+        }
+
+        return false;
+    }
+
 
 
     /// <summary>
@@ -1410,22 +1434,6 @@ public static class Functions
         }
 
         return false;
-    }
-
-    /// <summary>
-    ///     Additional validation for URIs that .NET accepts to ensure strict RFC 3986 compliance
-    /// </summary>
-    private static bool IsStrictlyRfc3986Compliant(string originalUri, Uri parsedUri)
-    {
-        // Check if the original URI started with "//" (should be rejected for absolute URIs)
-        if (originalUri.StartsWith("//"))
-        {
-            return false;
-        }
-
-        // Additional checks are now handled by the comprehensive validation above
-        // This method is kept for backwards compatibility and final .NET validation
-        return true;
     }
 
     /// <summary>
