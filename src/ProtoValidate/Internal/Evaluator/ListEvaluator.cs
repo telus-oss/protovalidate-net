@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +17,15 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class ListEvaluator : IEvaluator
+internal class ListEvaluator : IEvaluator
 {
-    public ListEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
+    public ListEvaluator(ValueEvaluator valueEvaluator, FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
     {
+        if (valueEvaluator == null)
+        {
+            throw new ArgumentNullException(nameof(valueEvaluator));
+        }
+
         FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
         if (messageRules == null)
@@ -29,14 +34,19 @@ public class ListEvaluator : IEvaluator
         }
 
         var ignore = fieldRules.Repeated?.Items?.CalculateIgnore(fieldDescriptor, messageRules) ?? Ignore.Unspecified;
-        ItemConstraints = new ValueEvaluator(fieldRules, fieldDescriptor, ignore);
+
+        var repeatedItemsRulePath = new FieldPath();
+        repeatedItemsRulePath.Elements.Add(FieldRules.Descriptor.FindFieldByNumber(FieldRules.RepeatedFieldNumber).CreateFieldPathElement());
+        repeatedItemsRulePath.Elements.Add(RepeatedRules.Descriptor.FindFieldByNumber(RepeatedRules.ItemsFieldNumber).CreateFieldPathElement());
+
+        ItemValueEvaluator = new ValueEvaluator(fieldRules, fieldDescriptor, ignore, repeatedItemsRulePath, null);
+        RuleViolationHelper = new RuleViolationHelper(valueEvaluator);
     }
-
-    public ValueEvaluator ItemConstraints { get; }
-    public FieldDescriptor FieldDescriptor { get; }
-    public FieldRules FieldRules { get; }
-
-    public bool Tautology => ItemConstraints.Tautology;
+    private RuleViolationHelper RuleViolationHelper { get; }
+    public ValueEvaluator ItemValueEvaluator { get; }
+    private FieldDescriptor FieldDescriptor { get; }
+    private FieldRules FieldRules { get; }
+    public bool Tautology => ItemValueEvaluator.Tautology;
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
@@ -51,13 +61,19 @@ public class ListEvaluator : IEvaluator
 
         for (var i = 0; i < repeatedValues.Count; i++)
         {
-            var evalResult = ItemConstraints.Evaluate(repeatedValues[i], failFast);
+            var evalResult = ItemValueEvaluator.Evaluate(repeatedValues[i], failFast);
             if (evalResult.Violations.Count == 0)
             {
                 continue;
             }
 
-            var violations = evalResult.Violations.PrefixErrorPaths("[{0}]", i);
+            var violations = evalResult.Violations;
+
+            //ste the violation paths
+            var fieldPathElement = RuleViolationHelper.FieldPathElement!.Clone();
+            fieldPathElement.Index = Convert.ToUInt64(i);
+            violations.UpdatePaths(fieldPathElement, RuleViolationHelper.RulePrefixElements);
+
             if (failFast && violations.Count > 0)
             {
                 return evalResult;

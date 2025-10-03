@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ using ProtoValidate.Internal.Evaluator;
 
 namespace ProtoValidate.Internal.Cel;
 
-public class CompiledProgramsEvaluator : IEvaluator
+internal class CompiledProgramsEvaluator : IEvaluator
 {
     public List<CompiledProgram> CompiledPrograms { get; }
-
-    public CompiledProgramsEvaluator(List<CompiledProgram> compiledPrograms)
+    private RuleViolationHelper RuleViolationHelper { get; }
+   
+    public CompiledProgramsEvaluator(ValueEvaluator? valueEvaluator, List<CompiledProgram> compiledPrograms)
     {
         CompiledPrograms = compiledPrograms ?? throw new ArgumentNullException(nameof(compiledPrograms));
+        RuleViolationHelper = new RuleViolationHelper(valueEvaluator);
     }
 
     public override string ToString()
@@ -45,19 +47,19 @@ public class CompiledProgramsEvaluator : IEvaluator
         {
             // Console.WriteLine($"Evaluating rule '{compiledProgram.Source.Id}': {compiledProgram.Source.ExpressionText}");
 
-            var violation = compiledProgram.Eval(variables);
+            var violation = compiledProgram.Eval(value, variables);
             if (violation != null)
             {
-                violation.Value = value?.Value<object?>();
-                // Console.WriteLine($"  Rule found violation: {violation}");
                 violationList.Add(violation);
             }
-        
-            if (failFast && violationList.Count > 0 )
+            
+            if (failFast && violationList.Count > 0)
             {
-                return new ValidationResult(violationList);
+                break;
             }
         }
+
+        violationList.UpdatePaths(RuleViolationHelper.FieldPathElement, RuleViolationHelper.RulePrefixElements);
 
         return new ValidationResult(violationList);
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class OneofEvaluator : IEvaluator
+internal class OneofEvaluator : IEvaluator
 {
-    internal OneofDescriptor Descriptor { get; }
-    internal bool Required { get; }
+    private OneofDescriptor Descriptor { get; }
+    private bool Required { get; }
 
     public OneofEvaluator(OneofDescriptor descriptor, bool required)
     {
@@ -52,14 +52,24 @@ public class OneofEvaluator : IEvaluator
 
         if (Required && caseFieldDescriptor == null)
         {
-            return new ValidationResult(new[]
+            var fieldPathElement = new FieldPathElement
+            {
+                FieldName = Descriptor.Name
+            };
+            
+            var fieldPath = new FieldPath() { Elements = { fieldPathElement } };
+            
+            var violations = new List<Violation>
             {
                 new Violation
                 {
                     RuleId = "required",
-                    Message = "Exactly one field is required in oneof."
+                    Message = "exactly one field is required in oneof",
+                    Field = fieldPath
                 }
-            });
+            };
+            
+            return new ValidationResult(violations);
         }
 
         return ValidationResult.Empty;

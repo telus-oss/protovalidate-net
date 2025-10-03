@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public interface IEvaluator
+internal interface IEvaluator
 {
     bool Tautology { get; }
     ValidationResult Evaluate(IValue? value, bool failFast);

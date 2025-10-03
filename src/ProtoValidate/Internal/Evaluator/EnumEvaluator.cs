@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class EnumEvaluator : IEvaluator
+internal class EnumEvaluator : IEvaluator
 {
-    internal IList<EnumValueDescriptor> ValueDescriptors { get; }
-    internal Dictionary<int, EnumValueDescriptor> Values { get; }
-
-    public EnumEvaluator(IList<EnumValueDescriptor> valueDescriptors)
+    private IList<EnumValueDescriptor> ValueDescriptors { get; }
+    private Dictionary<int, EnumValueDescriptor> Values { get; }
+    private RuleViolationHelper RuleViolationHelper { get; }
+    private FieldPath DefinedOnlyRulePath { get; }
+    public EnumEvaluator(ValueEvaluator valueEvaluator, IList<EnumValueDescriptor> valueDescriptors)
     {
         if (valueDescriptors == null)
         {
@@ -36,6 +37,16 @@ public class EnumEvaluator : IEvaluator
         {
             Values[descriptor.Number] = descriptor;
         }
+
+        DefinedOnlyRulePath = new FieldPath()
+        {
+            Elements =
+            {
+                FieldRules.Descriptor.FindFieldByNumber(FieldRules.EnumFieldNumber).CreateFieldPathElement(),
+                EnumRules.Descriptor.FindFieldByNumber(EnumRules.DefinedOnlyFieldNumber).CreateFieldPathElement()
+            }
+        };
+        RuleViolationHelper = new RuleViolationHelper(valueEvaluator);
     }
 
     public override string ToString()
@@ -63,14 +74,18 @@ public class EnumEvaluator : IEvaluator
 
         if (!Values.ContainsKey(enumIntValue))
         {
-            return new ValidationResult(new[]
+            var violation = new Violation
             {
-                new Violation
-                {
-                    RuleId = "enum.defined_only",
-                    Message = "Value must be one of the defined enum values."
-                }
-            });
+                RuleId = "enum.defined_only",
+                Message = "value must be one of the defined enum values",
+                Rule = new FieldPath(),
+                Field = new FieldPath(),
+                Value = enumValue
+            };
+            violation.UpdatePaths(RuleViolationHelper.FieldPathElement, RuleViolationHelper.RulePrefixElements);
+            violation.Rule.Elements.AddRange(DefinedOnlyRulePath.Elements);
+
+            return new ValidationResult([violation]);
         }
 
         return ValidationResult.Empty;

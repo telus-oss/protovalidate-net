@@ -1,4 +1,4 @@
-﻿// Copyright 2024 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal
 {
-    internal static class FieldConstraintExtensions
+    internal static class FieldRuleExtensions
     {
         public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
         {

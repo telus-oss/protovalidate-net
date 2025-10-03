@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Globalization;
-using System.Reflection;
 using Buf.Validate;
 using Google.Protobuf;
-using Google.Protobuf.Collections;
 using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class ValueEvaluator : IEvaluator
+internal class ValueEvaluator : IEvaluator
 {
-    public FieldRules FieldRules { get; }
-    public FieldDescriptor FieldDescriptor { get; }
-    public Ignore Ignore { get; }
-    internal object? DefaultValue { get; }
+    private FieldRules FieldRules { get; }
+    private FieldDescriptor FieldDescriptor { get; }
+    private Ignore Ignore { get; }
+    private object? DefaultValue { get; }
     public List<IEvaluator> Evaluators { get; } = new();
+    public FieldPath? NestedRule { get; }
+    public FieldPathElement? FieldPathElement { get; }
 
-    public ValueEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, Ignore ignore)
+    public ValueEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, Ignore ignore, FieldPath? nestedRule, FieldPathElement? fieldPathElement)
     {
         FieldRules = fieldRules ?? throw new ArgumentNullException(nameof(fieldRules));
         FieldDescriptor = fieldDescriptor ?? throw new ArgumentNullException(nameof(fieldDescriptor));
         Ignore = ignore;
         DefaultValue = fieldDescriptor.GetDefaultValue();
+        NestedRule = nestedRule;
+        FieldPathElement = fieldPathElement;
     }
 
     public override string ToString()
@@ -68,6 +69,7 @@ public class ValueEvaluator : IEvaluator
             {
                 return ValidationResult.Empty;
             }
+
             if (FieldDescriptor.ContainingType != null && FieldDescriptor.ContainingType.IsMapEntry)
             {
                 return ValidationResult.Empty;
@@ -75,7 +77,7 @@ public class ValueEvaluator : IEvaluator
         }
 
         var field = new FieldPath();
-        field.Elements.Add(new FieldPathElement()
+        field.Elements.Add(new FieldPathElement
         {
             FieldName = FieldDescriptor.Name,
             FieldNumber = FieldDescriptor.FieldNumber
@@ -86,15 +88,11 @@ public class ValueEvaluator : IEvaluator
         {
             var evalResult = evaluator.Evaluate(value, failFast);
 
-            foreach (var violation in evalResult.Violations)
-            {
-                violation.Field = field;
-            }
-            
             if (failFast && !evalResult.IsSuccess)
             {
                 return evalResult;
             }
+
 
             violations.AddRange(evalResult.Violations);
         }
@@ -127,6 +125,7 @@ public class ValueEvaluator : IEvaluator
                 {
                     return true;
                 }
+
                 if (string.Equals(defaultValue?.ToString(), stringFieldValue, StringComparison.Ordinal))
                 {
                     return true;

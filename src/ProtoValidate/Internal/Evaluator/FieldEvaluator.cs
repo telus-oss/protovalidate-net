@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class FieldEvaluator : IEvaluator
+internal class FieldEvaluator : IEvaluator
 {
     public ValueEvaluator ValueEvaluator { get; }
-    internal FieldDescriptor FieldDescriptor { get; }
-    internal FieldRules FieldRules { get; }
-    
-    internal Ignore Ignore { get; }
+    private FieldDescriptor FieldDescriptor { get; }
+    private FieldRules FieldRules { get; }
+    private Ignore Ignore { get; }
+    private RuleViolationHelper RuleViolationHelper { get; }
+    private FieldPath RequiredRulePath { get; }
+
     public FieldEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor fieldDescriptor, FieldRules fieldRules, MessageRules messageRules)
     {
         ValueEvaluator = valueEvaluator ?? throw new ArgumentNullException(nameof(valueEvaluator));
@@ -36,6 +38,15 @@ public class FieldEvaluator : IEvaluator
             throw new ArgumentNullException(nameof(messageRules));
         }
         Ignore = fieldRules.CalculateIgnore(fieldDescriptor, messageRules);
+
+        RequiredRulePath = new FieldPath()
+        {
+            Elements =
+            {
+                FieldRules.Descriptor.FindFieldByNumber(FieldRules.RequiredFieldNumber).CreateFieldPathElement()
+            }
+        };
+        RuleViolationHelper = new RuleViolationHelper(valueEvaluator);
     }
 
     public override string ToString()
@@ -44,7 +55,6 @@ public class FieldEvaluator : IEvaluator
     }
 
     public bool Tautology => !FieldRules.Required && ValueEvaluator.Tautology;
-
 
     public ValidationResult Evaluate(IValue? value, bool failFast)
     {
@@ -95,21 +105,17 @@ public class FieldEvaluator : IEvaluator
 
         if (FieldRules.Required && !hasField)
         {
-            var violationField = new FieldPath();
-            violationField.Elements.Add(new FieldPathElement()
+            var violation = new Violation
             {
-                FieldName = FieldDescriptor.Name,
-                FieldNumber = FieldDescriptor.FieldNumber
-            });
-            return new ValidationResult(new[]
-            {
-                new Violation
-                {
-                    RuleId = "required",
-                    Message = "Value is required.",
-                    Field = violationField
-                }
-            });
+                RuleId = "required",
+                Message = "value is required",
+                Rule = new FieldPath(),
+                Field = new FieldPath()
+            };
+            violation.UpdatePaths(RuleViolationHelper.FieldPathElement, RuleViolationHelper.RulePrefixElements);
+            violation.Rule.Elements.AddRange(RequiredRulePath.Elements);
+            
+            return new ValidationResult([violation]);
         }
 
         if ((Ignore == Ignore.IfZeroValue || FieldDescriptor.HasPresence) && !hasField)
@@ -118,8 +124,9 @@ public class FieldEvaluator : IEvaluator
         }
 
         var evalResult = ValueEvaluator.Evaluate(new ObjectValue(FieldDescriptor, fieldValue), failFast);
-        var violations = evalResult.Violations.PrefixErrorPaths("{0}", FieldDescriptor.Name);
-
+        
+        var violations = evalResult.Violations;
+     
         return new ValidationResult(violations);
     }
 }

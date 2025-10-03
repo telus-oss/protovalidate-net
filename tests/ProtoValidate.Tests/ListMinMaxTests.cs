@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class ListMinMaxTests
     [TestCase(1, true)]
     [TestCase(2, true)]
     [TestCase(3, false)]
-    public void TestMinMaxListConstraints(int items, bool isValid)
+    public void TestMinMaxListRules(int items, bool isValid)
     {
         //no items
         var validatorOptions = new ValidatorOptions

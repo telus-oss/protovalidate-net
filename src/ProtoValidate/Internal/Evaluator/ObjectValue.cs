@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class ObjectValue : IValue
+internal class ObjectValue : IValue
 {
-    internal object? InternalValue { get; }
-    internal FieldDescriptor FieldDescriptor { get; }
+    private object? InternalValue { get; }
+    private FieldDescriptor FieldDescriptor { get; }
 
     public ObjectValue(FieldDescriptor fieldDescriptor, object? internalValue)
     {
