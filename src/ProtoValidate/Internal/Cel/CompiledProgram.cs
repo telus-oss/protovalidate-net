@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,25 +16,28 @@ using Buf.Validate;
 using Cel;
 using Google.Protobuf;
 using ProtoValidate.Exceptions;
+using ProtoValidate.Internal.Evaluator;
 
 namespace ProtoValidate.Internal.Cel;
 
-public class CompiledProgram
+internal class CompiledProgram
 {
     public CelProgramDelegate CelProgramDelegate { get; }
     public Expression Source { get; }
     public IMessage? Rules { get; }
     public object? Rule { get; }
+    public FieldPath? RulePath { get; }
 
-    public CompiledProgram(CelProgramDelegate celExpressionDelegate, IMessage? rules, object?  rule, Expression? source)
+    public CompiledProgram(CelProgramDelegate celExpressionDelegate, Expression? source, FieldPath? rulePath, IMessage? rules, object? rule)
     {
         CelProgramDelegate = celExpressionDelegate ?? throw new ArgumentNullException(nameof(celExpressionDelegate));
+        Source = source ?? throw new ArgumentNullException(nameof(source));
         Rules = rules;
         Rule = rule;
-        Source = source ?? throw new ArgumentNullException(nameof(source));
+        RulePath = rulePath;
     }
 
-    public Violation? Eval(IDictionary<string, object?> variables)
+    public Violation? Eval(IValue? value, IDictionary<string, object?> variables)
     {
         object? evalResult;
 
@@ -72,11 +75,23 @@ public class CompiledProgram
                 return null;
             }
 
-            return new Violation
+            var violation = new Violation
             {
                 RuleId = Source.Id,
-                Message = evalResultString
+                Message = evalResultString,
             };
+
+            if (RulePath != null)
+            {
+                violation.Rule = new FieldPath() { Elements = { RulePath.Elements.Select(c => c.Clone()) } };
+            }
+
+            if (value != null)
+            {
+                violation.Value = value;
+            }
+
+            return violation;
         }
 
         if (evalResult is bool evalResultBool)
@@ -86,11 +101,23 @@ public class CompiledProgram
                 return null;
             }
 
-            return new Violation
+            var violation = new Violation
             {
                 RuleId = Source.Id,
                 Message = Source.Message
             };
+
+            if (RulePath != null)
+            {
+                violation.Rule = new FieldPath() { Elements = { RulePath.Elements.Select(c => c.Clone()) } };
+            }
+
+            if (value != null)
+            {
+                violation.Value = value;
+            }
+
+            return violation;
         }
 
         throw new ExecutionException($"Resolved to an unexpected type {evalResult?.GetType().FullName ?? "null"}", Source);

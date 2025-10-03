@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ using NUnit.Framework;
 namespace ProtoValidate.Tests;
 
 [TestFixture]
-public class ConstraintResolveTests
+public class RuleResolveTests
 {
     [Test]
     public void TestOptions()
@@ -28,8 +28,8 @@ public class ConstraintResolveTests
 
         var messageExtension = ValidateExtensions.Message;
 
-        var messageConstraints = messageOptions.GetExtension(messageExtension);
+        var messageRules = messageOptions.GetExtension(messageExtension);
 
-        Assert.That(messageConstraints, Is.Not.Null);
+        Assert.That(messageRules, Is.Not.Null);
     }
 }

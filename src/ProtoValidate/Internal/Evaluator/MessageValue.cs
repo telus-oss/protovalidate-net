@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ using Google.Protobuf;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class MessageValue : IValue
+internal class MessageValue : IValue
 {
     internal IMessage InternalValue { get; }
 

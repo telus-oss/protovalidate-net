@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class MessageOneofEvaluator : IEvaluator
+internal class MessageOneofEvaluator : IEvaluator
 {
-    public List<IEvaluator> Evaluators { get; } = new();
-    public MessageDescriptor Descriptor { get; }
-    public FieldDescriptor[] FieldDescriptors { get; }
-    public MessageOneofRule MessageOneOfRule { get; }
+    private MessageDescriptor Descriptor { get; }
+    private FieldDescriptor[] FieldDescriptors { get; }
+    private MessageOneofRule MessageOneOfRule { get; }
 
     public MessageOneofEvaluator(MessageDescriptor descriptor, MessageOneofRule messageOneOfRule)
     {

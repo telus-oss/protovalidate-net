@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class RuleResolver
+internal class RuleResolver
 {
     /// <summary>
-    ///     Resolves the constraints for a message descriptor.
+    ///     Resolves the rules for a message descriptor.
     /// </summary>
     /// <param name="descriptor">The descriptor for the message.</param>
-    /// <returns>Returns the resolved message constraints.</returns>
+    /// <returns>Returns the resolved message rules.</returns>
     public MessageRules ResolveMessageRules(MessageDescriptor descriptor)
     {
         var messageOptions = descriptor.GetOptions();
@@ -39,14 +39,14 @@ public class RuleResolver
             return new MessageRules();
         }
 
-        var messageConstraints = messageOptions.GetExtension(messageExtension);
+        var messageRules = messageOptions.GetExtension(messageExtension);
 
-        if (messageConstraints == null)
+        if (messageRules == null)
         {
             return new MessageRules();
         }
         
-        return messageConstraints;
+        return messageRules;
     }
 
     public OneofRules ResolveOneofRules(OneofDescriptor descriptor)
@@ -86,15 +86,15 @@ public class RuleResolver
         return fieldRules;
     }
 
-    // public PredefinedConstraints ResolvePredefinedConstraints(FieldDescriptor descriptor)
+    // public PredefinedRules ResolvePredefinedRules(FieldDescriptor descriptor)
     // {
     //     var options = descriptor.GetOptions();
     //     if (options == null || !options.HasExtension(ValidateExtensions.Predefined))
     //     {
-    //         return new PredefinedConstraints();
+    //         return new PredefinedRules();
     //     }
     //
-    //     var predefinedConstraints = options.GetExtension(ValidateExtensions.Predefined);
-    //     return predefinedConstraints;
+    //     var predefinedRules = options.GetExtension(ValidateExtensions.Predefined);
+    //     return predefinedRules;
     // }
 }

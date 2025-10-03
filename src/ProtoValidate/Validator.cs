@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
 // limitations under the License.
 
 using System.Text;
-using Buf.Validate;
 using Cel;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Options;
 using ProtoValidate.Internal.Cel;
 using ProtoValidate.Internal.Evaluator;
-using ProtoValidate.Internal.Evaluator.Evaluator;
 
 namespace ProtoValidate;
 
@@ -47,6 +44,7 @@ public class Validator : IValidator
         Options = optionsAccessor.Value;
         Initialize();
     }
+
     internal ValidatorOptions Options { get; }
 
     internal EvaluatorBuilder? EvaluatorBuilder { get; set; }
@@ -156,7 +154,7 @@ public class Validator : IValidator
         }
         else if (evaluator is ListEvaluator listEvaluator)
         {
-            sb.Append(GetEvaluatorDebugString(listEvaluator.ItemConstraints, nestLevel + 1, visitedEvaluators));
+            sb.Append(GetEvaluatorDebugString(listEvaluator.ItemValueEvaluator, nestLevel + 1, visitedEvaluators));
         }
         else if (evaluator is MapEvaluator mapEvaluator)
         {

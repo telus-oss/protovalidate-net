@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ using Google.Protobuf.WellKnownTypes;
 
 namespace ProtoValidate.Internal.Cel;
 
-public static class FormatFunction
+internal static class FormatFunction
 {
     internal static readonly char[] HEX_ARRAY = "0123456789ABCDEF".ToCharArray();
     internal static readonly char[] LOWER_HEX_ARRAY = "0123456789abcdef".ToCharArray();
@@ -175,7 +175,7 @@ public static class FormatFunction
     {
         if (val is bool valBool)
         {
-            return valBool.ToString();
+            return valBool.ToString().ToLowerInvariant();
         }
 
         if (val is int valInt)
@@ -210,7 +210,7 @@ public static class FormatFunction
 
         if (val is string valString)
         {
-            return "\"" + valString + "\"";
+            return valString;
         }
 
         if (val is ByteString valByteString)
@@ -238,7 +238,7 @@ public static class FormatFunction
 
     internal static string FormatBytes(ByteString val)
     {
-        return "\"" + val.ToStringUtf8() + "\"";
+        return val.ToStringUtf8();
     }
 
     internal static string FormatInt(long val)
@@ -253,7 +253,7 @@ public static class FormatFunction
 
     internal static string FormatDouble(double val)
     {
-        return val.ToString("0.#", CultureInfo.InvariantCulture);
+        return val.ToString("0.#######################", CultureInfo.InvariantCulture);
     }
 
     internal static string FormatTimestamp(Timestamp value)
@@ -268,25 +268,20 @@ public static class FormatFunction
         }
         else
         {
-            serializedValue = dateTimeOffset.ToString("yyyy-MM-ddTHH:mm:ss'.'fffffffK", CultureInfo.InvariantCulture);
+            serializedValue = dateTimeOffset.ToString("yyyy-MM-ddTHH:mm:ss'.'fffK", CultureInfo.InvariantCulture);
         }
 
         var timestampString = serializedValue.Replace("+00:00", "Z");
 
-        return string.Concat("timestamp(", timestampString, ")");
+        return timestampString;
     }
 
     internal static string FormatDuration(Duration value, bool listType)
     {
-        var ticks = value.Seconds * 10000000000 + value.Nanos;
-        var totalSeconds = Convert.ToInt64(Math.Truncate(ticks / 1000000000d));
+        var ticks = value.Seconds * 1000000000 + value.Nanos;
+        var totalSeconds = ticks / 1000000000d;
 
-        var durationString = totalSeconds.ToString("0.#########", CultureInfo.InvariantCulture) + "s";
-
-        if (listType)
-        {
-            return string.Concat("duration(\"", durationString, "\")");
-        }
+        var durationString = totalSeconds.ToString("0.###########", CultureInfo.InvariantCulture) + "s";
 
         return durationString;
     }
@@ -320,7 +315,7 @@ public static class FormatFunction
             hexChars[j * 2 + 1] = digits[v & 0x0F];
         }
 
-        return hexChars.ToString() ?? "";
+        return new string(hexChars);
     }
 
     internal static string FormatHex(object? val, char[] digits)

@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class UnknownDescriptorEvaluator : IEvaluator
+internal class UnknownDescriptorEvaluator : IEvaluator
 {
-    internal DescriptorBase Descriptor { get; }
+    private DescriptorBase Descriptor { get; }
 
     public UnknownDescriptorEvaluator(DescriptorBase descriptor)
     {

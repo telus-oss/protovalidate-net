@@ -23,7 +23,7 @@ using System.Text.RegularExpressions;
 
 namespace ProtoValidate.Internal.Cel;
 
-public static class Functions
+internal static class Functions
 {
     public static void RegisterProtoValidateFunctions(this CelEnvironment celEnvironment)
     {

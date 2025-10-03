@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Reflection;
 using Buf.Validate;
 using Cel;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using ProtoValidate.Exceptions;
 using ProtoValidate.Internal.Cel;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Reflection;
+using ProtoValidate.Internal.Evaluator;
 using FieldRules = Buf.Validate.FieldRules;
 
-namespace ProtoValidate.Internal.Constraints;
+namespace ProtoValidate.Internal.Rules;
 
-public class ConstraintCache
+internal class RuleCache
 {
-    public ConstraintCache(CelEnvironment celEnvironment, IList<FieldDescriptor> extensions)
+    public RuleCache(CelEnvironment celEnvironment, IList<FieldDescriptor> extensions)
     {
         if (celEnvironment == null)
         {
@@ -46,28 +48,28 @@ public class ConstraintCache
     /// <summary>
     ///     Map for caching descriptor and their expression delegates
     /// </summary>
-    internal ConcurrentDictionary<FieldDescriptor, List<CompiledExpression>> DescriptorMap { get; } = new();
+    internal ConcurrentDictionary<FieldDescriptor, List<CelRule>> DescriptorMap { get; } = new();
 
     internal CelEnvironment CelEnvironment { get; }
     internal IList<FieldDescriptor> Extensions { get; }
 
-    public List<CompiledProgram> Compile(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems)
+    public List<CompiledProgram> Compile(FieldDescriptor fieldDescriptor, bool forItems, FieldRules fieldRules)
     {
         var compiledProgramList = new List<CompiledProgram>();
 
-        var rulesMessage = ResolveConstraints(fieldDescriptor, fieldRules, forItems);
-        if (rulesMessage == null)
+        var resolvedRule = ResolveRules(fieldDescriptor, fieldRules, forItems);
+        if (resolvedRule == null)
         {
-            // Message null means there were no constraints resolved.
+            // Message null means there were no rules resolved.
             return new List<CompiledProgram>();
         }
 
-        //build a cache of all possible constraints for this descriptor field
-        foreach (var constraintFieldDescriptor in rulesMessage.Descriptor.Fields.InDeclarationOrder())
+        //build a cache of all possible rules for this descriptor field
+        foreach (var ruleFieldDescriptor in resolvedRule.Rule.Descriptor.Fields.InDeclarationOrder())
         {
-            if (!DescriptorMap.ContainsKey(constraintFieldDescriptor))
+            if (!DescriptorMap.ContainsKey(ruleFieldDescriptor))
             {
-                var options = constraintFieldDescriptor.GetOptions();
+                var options = ruleFieldDescriptor.GetOptions();
 
                 if (options == null)
                 {
@@ -75,29 +77,39 @@ public class ConstraintCache
                 }
 
                 var rules = options.GetExtension(ValidateExtensions.Predefined);
-                
+
                 if (rules == null)
                 {
                     rules = new PredefinedRules();
                 }
-                var expressions = Expression.FromRules(rules.Cel).ToList();
 
-                var compiledPrograms = new List<CompiledExpression>();
+                var compiledPrograms = new List<CelRule>();
 
-                foreach (var expression in expressions)
+                foreach (var rule in rules.Cel)
                 {
+                    var expression = new Expression(rule);
+
                     var celExpression = CelEnvironment.Compile(expression.ExpressionText);
 
-                    var compiledExpressionItem = new CompiledExpression(expression, celExpression);
+                    var rulePath = new FieldPath()
+                    {
+                        Elements =
+                        {
+                            resolvedRule.OneofFieldDescriptor.CreateFieldPathElement(),
+                            ruleFieldDescriptor.CreateFieldPathElement()
+                        }
+                    };
+
+                    var compiledExpressionItem = new CelRule(rule, expression, celExpression, ruleFieldDescriptor, forItems, rulePath);
                     compiledPrograms.Add(compiledExpressionItem);
                 }
 
-                DescriptorMap[constraintFieldDescriptor] = compiledPrograms;
+                DescriptorMap[ruleFieldDescriptor] = compiledPrograms;
             }
         }
 
         //this is where we would compile the extensions, if there are any.
-        var ruleType = rulesMessage.GetType();
+        var ruleType = resolvedRule.Rule.GetType();
 
         foreach (var extensionFieldDescriptor in Extensions.Where(c => c.IsExtension && c.ExtendeeType.ClrType == ruleType))
         {
@@ -127,7 +139,7 @@ public class ConstraintCache
 
                 var genericGetExtensionValueMethod = getExtensionValueMethod.MakeGenericMethod(extensionValueType);
 
-                extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
+                extensionValue = genericGetExtensionValueMethod.Invoke(resolvedRule.Rule, new object?[] { extension });
                 if (extensionValue == null)
                 {
                     continue;
@@ -144,7 +156,7 @@ public class ConstraintCache
 
                 var genericHasExtensionMethod = hasExtensionMethod.MakeGenericMethod(new System.Type[] { extensionValueType });
 
-                var hasExtension = (bool?)genericHasExtensionMethod.Invoke(rulesMessage, new object?[] { extension }) ?? false;
+                var hasExtension = (bool?)genericHasExtensionMethod.Invoke(resolvedRule.Rule, new object?[] { extension }) ?? false;
                 if (!hasExtension)
                 {
                     continue;
@@ -158,59 +170,68 @@ public class ConstraintCache
 
                 var genericGetExtensionValueMethod = getExtensionValueMethod.MakeGenericMethod(extensionValueType);
 
-                extensionValue = genericGetExtensionValueMethod.Invoke(rulesMessage, new object?[] { extension });
+                extensionValue = genericGetExtensionValueMethod.Invoke(resolvedRule.Rule, new object?[] { extension });
             }
 
-            var expressions = Expression.FromRules(predefinedRules.Cel).ToList();
-            
-            foreach (var expression in expressions)
+
+            var rulePath = new FieldPath()
             {
+                Elements =
+                {
+                    resolvedRule.OneofFieldDescriptor.CreateFieldPathElement(),
+                    extensionFieldDescriptor.CreateFieldPathElement(),
+                },
+            };
+            
+            foreach (var rule in predefinedRules.Cel)
+            {
+                var expression = new Expression(rule);
                 var celExpression = CelEnvironment.Compile(expression.ExpressionText);
 
-                var compiledProgram = new CompiledProgram(celExpression, null, extensionValue, expression);
+                var compiledProgram = new CompiledProgram(celExpression, expression, rulePath, null, extensionValue);
                 compiledProgramList.Add(compiledProgram);
             }
         }
 
-        //now check to see if we need to add the constraint at all based on the specific rules for this field.
-        foreach (var constraintFieldDescriptor in rulesMessage.Descriptor.Fields.InDeclarationOrder())
+        //now check to see if we need to add the rule at all based on the specific rules for this field.
+        foreach (var ruleFieldDescriptor in resolvedRule.Rule.Descriptor.Fields.InDeclarationOrder())
         {
-            if (constraintFieldDescriptor.HasPresence)
+            if (ruleFieldDescriptor.HasPresence)
             {
-                var hasRule = constraintFieldDescriptor.Accessor.HasValue(rulesMessage);
+                var hasRule = ruleFieldDescriptor.Accessor.HasValue(resolvedRule.Rule);
                 if (!hasRule)
                 {
                     continue;
                 }
             }
-            else if (constraintFieldDescriptor.IsMap)
+            else if (ruleFieldDescriptor.IsMap)
             {
-                var value = (IDictionary)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                var value = (IDictionary)ruleFieldDescriptor.Accessor.GetValue(resolvedRule.Rule);
                 if (value.Count == 0)
                 {
                     continue;
                 }
             }
-            else if (constraintFieldDescriptor.IsRepeated)
+            else if (ruleFieldDescriptor.IsRepeated)
             {
-                var value = (IList)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                var value = (IList)ruleFieldDescriptor.Accessor.GetValue(resolvedRule.Rule);
                 if (value.Count == 0)
                 {
                     continue;
                 }
             }
-            else if (constraintFieldDescriptor.FieldType == FieldType.Bool)
+            else if (ruleFieldDescriptor.FieldType == FieldType.Bool)
             {
-                var value = (bool)constraintFieldDescriptor.Accessor.GetValue(rulesMessage);
+                var value = (bool)ruleFieldDescriptor.Accessor.GetValue(resolvedRule.Rule);
                 if (!value)
                 {
                     continue;
                 }
             }
 
-            if (DescriptorMap.TryGetValue(constraintFieldDescriptor, out var compiledExpressionList))
+            if (DescriptorMap.TryGetValue(ruleFieldDescriptor, out var compiledExpressionList))
             {
-                var compiledPrograms = compiledExpressionList.Select(c => new CompiledProgram(c.CelProgramDelegate, rulesMessage, null, c.Source)).ToList();
+                var compiledPrograms = compiledExpressionList.Select(c => new CompiledProgram(c.CelProgramDelegate, c.Source, c.RulePath, resolvedRule.Rule, c.Rule)).ToList();
                 compiledProgramList.AddRange(compiledPrograms);
             }
         }
@@ -218,12 +239,12 @@ public class ConstraintCache
         return compiledProgramList;
     }
 
-    internal IMessage? ResolveConstraints(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems)
+    internal ResolvedRule? ResolveRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems)
     {
         var fieldOneofs = FieldRules.Descriptor.Oneofs;
         if (fieldOneofs == null || fieldOneofs.Count == 0)
         {
-            // If the oneof field descriptor is null there are no constraints to resolve.
+            // If the oneof field descriptor is null there are no rules to resolve.
             return null;
         }
 
@@ -233,36 +254,55 @@ public class ConstraintCache
             return null;
         }
 
-        // Get the expected constraint descriptor based on the provided field descriptor and the flag
+        // Get the expected rule descriptor based on the provided field descriptor and the flag
         // indicating whether it is for items.
-        var expectedConstraintDescriptor = DescriptorMappings.GetExpectedConstraintDescriptor(fieldDescriptor, forItems);
-        if (expectedConstraintDescriptor == null)
+        var expectedRuleDescriptor = DescriptorMappings.GetExpectedRuleDescriptor(fieldDescriptor, forItems);
+        if (expectedRuleDescriptor == null)
         {
             return null;
         }
 
-        if (oneofFieldDescriptor.FullName != expectedConstraintDescriptor.FullName)
+        if (oneofFieldDescriptor.FullName != expectedRuleDescriptor.FullName)
         {
-            // If the expected constraint does not match the actual oneof constraint, throw a
+            // If the expected rule does not match the actual oneof rule, throw a
             // CompilationError.
-            throw new CompilationException($"Expected constraint '{expectedConstraintDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
+            throw new CompilationException($"Expected rule '{expectedRuleDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
         }
 
         var typedFieldRules = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldRules);
 
-
-        return typedFieldRules;
+        var resolvedRule = new ResolvedRule(typedFieldRules, oneofFieldDescriptor);
+        
+        return resolvedRule;
     }
 
-    internal class CompiledExpression
+    internal class ResolvedRule
     {
-        public CompiledExpression(Expression source, CelProgramDelegate celProgramDelegate)
+        public IMessage Rule { get; }
+        public FieldDescriptor OneofFieldDescriptor { get; }
+
+        public ResolvedRule(IMessage rule, FieldDescriptor oneofFieldDescriptor)
         {
+            Rule = rule;
+            OneofFieldDescriptor = oneofFieldDescriptor;
+        }
+    }
+    internal class CelRule
+    {
+        public CelRule(Rule rule, Expression source, CelProgramDelegate celProgramDelegate, FieldDescriptor ruleFieldDescriptor, bool forItems, FieldPath rulePath)
+        {
+            Rule = rule;
             Source = source;
             CelProgramDelegate = celProgramDelegate;
+            RuleFieldDescriptor = ruleFieldDescriptor;
+            ForItems = forItems;
+            RulePath = rulePath;
         }
-
+        public Rule Rule { get; }
         public Expression Source { get; }
         public CelProgramDelegate CelProgramDelegate { get; }
+        public FieldDescriptor RuleFieldDescriptor { get; }
+        public bool ForItems { get; }
+        public FieldPath RulePath { get; }
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class MapEvaluator : IEvaluator
+internal class MapEvaluator : IEvaluator
 {
-    public MapEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
+    public MapEvaluator(FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules, ValueEvaluator mapEvaluator)
     {
         if (fieldRules == null)
         {
@@ -35,20 +35,33 @@ public class MapEvaluator : IEvaluator
         FieldDescriptor = fieldDescriptor;
 
         var mapRules = fieldRules.Map;
-        var keyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
-        var valueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
+        KeyDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(1);
+        ValueDescriptor = fieldDescriptor.MessageType.FindFieldByNumber(2);
 
         var mapRulesKeysFieldRules = mapRules?.Keys ?? new FieldRules();
         var mapRulesValuesFieldRules = mapRules?.Values ?? new FieldRules();
 
-        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldRules, keyDescriptor, mapRulesKeysFieldRules.CalculateIgnore(keyDescriptor, messageRules));
-        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldRules, valueDescriptor, mapRulesValuesFieldRules.CalculateIgnore(valueDescriptor, messageRules));
+        var mapKeysRulePath = new FieldPath();
+        mapKeysRulePath.Elements.Add(FieldRules.Descriptor.FindFieldByNumber(FieldRules.MapFieldNumber).CreateFieldPathElement());
+        mapKeysRulePath.Elements.Add(MapRules.Descriptor.FindFieldByNumber(MapRules.KeysFieldNumber).CreateFieldPathElement());
+
+        var mapValuesRulePath = new FieldPath();
+        mapValuesRulePath.Elements.Add(FieldRules.Descriptor.FindFieldByNumber(FieldRules.MapFieldNumber).CreateFieldPathElement());
+        mapValuesRulePath.Elements.Add(MapRules.Descriptor.FindFieldByNumber(MapRules.ValuesFieldNumber).CreateFieldPathElement());
+
+        KeyEvaluator = new ValueEvaluator(mapRulesKeysFieldRules, KeyDescriptor, mapRulesKeysFieldRules.CalculateIgnore(KeyDescriptor, messageRules), mapKeysRulePath, null);
+        ValueEvaluator = new ValueEvaluator(mapRulesValuesFieldRules, ValueDescriptor, mapRulesValuesFieldRules.CalculateIgnore(ValueDescriptor, messageRules), mapValuesRulePath, null);
+
+        RuleViolationHelper = new RuleViolationHelper(mapEvaluator);
     }
 
+    private RuleViolationHelper RuleViolationHelper { get; }
+    private FieldDescriptor KeyDescriptor { get; }
+    private FieldDescriptor ValueDescriptor { get; }
     public ValueEvaluator KeyEvaluator { get; }
     public ValueEvaluator ValueEvaluator { get; }
-    public FieldDescriptor FieldDescriptor { get; }
-    public FieldRules FieldRules { get; }
+    private FieldDescriptor FieldDescriptor { get; }
+    private FieldRules FieldRules { get; }
 
     public bool Tautology => KeyEvaluator.Tautology && ValueEvaluator.Tautology;
 
@@ -86,11 +99,17 @@ public class MapEvaluator : IEvaluator
 
     internal List<Violation> EvalPairs(IValue key, IValue value, bool failFast)
     {
-        var keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
+        var keyName = key.Value<object?>();
+        if (keyName == null)
+        {
+            return new List<Violation>();
+        }
+
         List<Violation> valueViolations;
+        var keyViolations = KeyEvaluator.Evaluate(key, failFast).Violations;
         if (failFast && keyViolations.Count > 0)
         {
-            // Don't evaluate value constraints if failFast is enabled and keys failed validation.
+            // Don't evaluate value rules if failFast is enabled and keys failed validation.
             // We still need to continue execution to the end to properly prefix violation field paths.
             valueViolations = new List<Violation>();
         }
@@ -108,22 +127,41 @@ public class MapEvaluator : IEvaluator
         violations.AddRange(keyViolations);
         violations.AddRange(valueViolations);
 
-        var keyName = key.Value<object?>();
-        if (keyName == null)
+        var fieldPathElement = RuleViolationHelper.FieldPathElement!.Clone();
+        fieldPathElement.KeyType = KeyDescriptor.ToProto().Type;
+        fieldPathElement.ValueType = ValueDescriptor.ToProto().Type;
+
+        switch (KeyDescriptor.FieldType)
         {
-            return new List<Violation>();
+            case FieldType.Int64:
+            case FieldType.Int32:
+            case FieldType.SInt64:
+            case FieldType.SInt32:
+            case FieldType.SFixed64:
+            case FieldType.SFixed32:
+                fieldPathElement.IntKey = Convert.ToInt64(keyName);
+                break;
+            case FieldType.UInt64:
+            case FieldType.UInt32:
+            case FieldType.Fixed64:
+            case FieldType.Fixed32:
+                fieldPathElement.UintKey = Convert.ToUInt64(keyName);
+                break;
+            case FieldType.Bool:
+                fieldPathElement.BoolKey = (bool)keyName;
+                break;
+            case FieldType.String:
+                fieldPathElement.StringKey = (string)keyName;
+                break;
         }
 
-        List<Violation> prefixedViolations;
-        if (keyName.IsNumber())
-        {
-            prefixedViolations = violations.PrefixErrorPaths("[{0}]", keyName);
-        }
-        else
-        {
-            prefixedViolations = violations.PrefixErrorPaths("[\"{0}\"]", keyName);
-        }
 
-        return prefixedViolations;
+        foreach (var violation in (keyViolations))
+        {
+            violation.ForKey = true;
+        }
+        violations.UpdatePaths(fieldPathElement, RuleViolationHelper.RulePrefixElements);
+
+        return violations;
     }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using ProtoValidate.Exceptions;
 using ProtoValidate.Internal.Cel;
-using ProtoValidate.Internal.Constraints;
+using ProtoValidate.Internal.Rules;
 
-namespace ProtoValidate.Internal.Evaluator.Evaluator;
+namespace ProtoValidate.Internal.Evaluator;
 
-public class EvaluatorBuilder
+internal class EvaluatorBuilder
 {
     internal static readonly string[] GoogleWellKnownTypes =
     {
@@ -41,14 +41,14 @@ public class EvaluatorBuilder
         "google.protobuf.Any"
     };
 
-    internal readonly ConcurrentDictionary<string, IEvaluator> EvaluatorMap = new();
+    internal readonly ConcurrentDictionary<string, MessageEvaluator> EvaluatorMap = new();
 
     public EvaluatorBuilder(CelEnvironment celEnvironment, bool disableLazy, IList<FieldDescriptor> extensions)
     {
         DisableLazy = disableLazy;
         Extensions = extensions;
         CelEnvironment = celEnvironment;
-        Constraints = new ConstraintCache(celEnvironment, extensions);
+        Rules = new RuleCache(celEnvironment, extensions);
         RuleResolver = new RuleResolver();
     }
 
@@ -57,7 +57,7 @@ public class EvaluatorBuilder
     internal RuleResolver RuleResolver { get; }
     internal bool DisableLazy { get; }
     internal CelEnvironment CelEnvironment { get; }
-    internal ConstraintCache Constraints { get; }
+    internal RuleCache Rules { get; }
 
     /// <summary>
     ///     Returns a pre-cached Evaluator for the given descriptor or, if the descriptor is
@@ -85,17 +85,17 @@ public class EvaluatorBuilder
         return evaluator;
     }
 
-    internal IEvaluator LoadOrBuildDescriptor(MessageDescriptor messageDescriptor)
+    internal MessageEvaluator LoadOrBuildDescriptor(MessageDescriptor messageDescriptor)
     {
         return EvaluatorMap.GetOrAdd(messageDescriptor.FullName, _ => Build(messageDescriptor));
     }
 
-    internal IEvaluator Build(MessageDescriptor messageDescriptor)
+    internal MessageEvaluator Build(MessageDescriptor messageDescriptor)
     {
-        return Build(messageDescriptor, new Dictionary<string, IEvaluator>());
+        return Build(messageDescriptor, new Dictionary<string, MessageEvaluator>());
     }
 
-    internal IEvaluator Build(MessageDescriptor messageDescriptor, IDictionary<string, IEvaluator> inProgressMessageEvaluators)
+    internal MessageEvaluator Build(MessageDescriptor messageDescriptor, IDictionary<string, MessageEvaluator> inProgressMessageEvaluators)
     {
         return EvaluatorMap.GetOrAdd(messageDescriptor.FullName, c_messageDescriptor =>
         {
@@ -112,7 +112,7 @@ public class EvaluatorBuilder
         });
     }
 
-    internal void BuildMessage(MessageDescriptor messageDescriptor, MessageEvaluator messageEvaluator, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void BuildMessage(MessageDescriptor messageDescriptor, MessageEvaluator messageEvaluator, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
         try
         {
@@ -170,7 +170,7 @@ public class EvaluatorBuilder
         }
     }
 
-    internal void ProcessFields(MessageDescriptor messageDescriptor, MessageRules messageRules, MessageEvaluator messageEvaluator, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessFields(MessageDescriptor messageDescriptor, MessageRules messageRules, MessageEvaluator messageEvaluator, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
         var fieldDescriptors = messageDescriptor.Fields.InDeclarationOrder();
         foreach (var fieldDescriptor in fieldDescriptors)
@@ -182,30 +182,32 @@ public class EvaluatorBuilder
         }
     }
 
-    internal FieldEvaluator BuildField(FieldDescriptor fieldDescriptor, FieldRules fieldRules, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal FieldEvaluator BuildField(FieldDescriptor fieldDescriptor, FieldRules fieldRules, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
+        FieldPathElement fieldPathElement = fieldDescriptor.CreateFieldPathElement();
+
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
-        var valueEvaluatorEval = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules));
+        var valueEvaluatorEval = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules), null, fieldPathElement);
 
         var fieldEvaluator = new FieldEvaluator(valueEvaluatorEval, fieldDescriptor, fieldRules, messageRules);
-        BuildValue(fieldDescriptor, fieldRules, false, fieldEvaluator.ValueEvaluator, messageRules, nestedMessageEvaluators);
+        BuildValue(fieldDescriptor, fieldRules, fieldEvaluator.ValueEvaluator, messageRules, nestedMessageEvaluators);
         return fieldEvaluator;
     }
 
-    internal void BuildValue(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluator, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void BuildValue(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluator, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
-        ProcessFieldExpressions(fieldRules, valueEvaluator);
-        ProcessEmbeddedMessage(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
-        ProcessWrapperRules(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
-        ProcessStandardRules(fieldDescriptor, fieldRules, forItems, valueEvaluator);
-        ProcessAnyRules(fieldDescriptor, fieldRules, forItems, valueEvaluator);
+        ProcessFieldExpressions(fieldDescriptor, fieldRules, valueEvaluator);
+        ProcessEmbeddedMessage(fieldDescriptor, fieldRules, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessWrapperRules(fieldDescriptor, fieldRules, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessStandardRules(fieldDescriptor, fieldRules, valueEvaluator);
+        ProcessAnyRules(fieldDescriptor, fieldRules, valueEvaluator);
         ProcessEnumRules(fieldDescriptor, fieldRules, valueEvaluator);
         ProcessMapRules(fieldDescriptor, fieldRules, valueEvaluator, messageRules, nestedMessageEvaluators);
-        ProcessRepeatedRules(fieldDescriptor, fieldRules, forItems, valueEvaluator, messageRules, nestedMessageEvaluators);
+        ProcessRepeatedRules(fieldDescriptor, fieldRules, valueEvaluator, messageRules, nestedMessageEvaluators);
     }
 
-    internal void ProcessFieldExpressions(FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessFieldExpressions(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
         IList<Rule> rulesCelList = fieldRules.Cel;
         if (rulesCelList.Count == 0)
@@ -213,14 +215,14 @@ public class EvaluatorBuilder
             return;
         }
 
-        var compiledPrograms = CompileRules(rulesCelList, CelEnvironment);
+        var compiledPrograms = CompileRules(rulesCelList, CelEnvironment, true);
         if (compiledPrograms.Count > 0)
         {
-            valueEvaluatorEval.AddEvaluator(new CompiledProgramsEvaluator(compiledPrograms));
+            valueEvaluatorEval.AddEvaluator(new CompiledProgramsEvaluator(valueEvaluatorEval, compiledPrograms));
         }
     }
 
-    internal void ProcessEmbeddedMessage(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessEmbeddedMessage(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
         //we pass in the message descriptor and evaluator here because we don't have our current descriptor stored in the dictionary yet
         //and if we have a nested/recursive data structure, we need to be able to get our current evaluator instance independently of the dictionary to prevent a race condition.
@@ -228,7 +230,7 @@ public class EvaluatorBuilder
         if (fieldDescriptor.FieldType != FieldType.Message
             || (fieldRules.CalculateIgnore(fieldDescriptor, messageRules) == Ignore.Always)
             || fieldDescriptor.IsMap
-            || (fieldDescriptor.IsRepeated && !forItems)
+            || (fieldDescriptor.IsRepeated && valueEvaluatorEval.NestedRule == null)
             || GoogleWellKnownTypes.Contains(fieldDescriptor.MessageType.FullName))
         {
             return;
@@ -239,46 +241,50 @@ public class EvaluatorBuilder
             embedEval = Build(fieldDescriptor.MessageType, nestedMessageEvaluators);
         }
 
-        valueEvaluatorEval.AddEvaluator(embedEval);
+        var embeddedMessageEvaluator = new EmbeddedMessageEvaluator(valueEvaluatorEval, embedEval);
+
+        valueEvaluatorEval.AddEvaluator(embeddedMessageEvaluator);
     }
 
-    internal void ProcessWrapperRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessWrapperRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
         if (fieldDescriptor.FieldType != FieldType.Message
             || (fieldRules.CalculateIgnore(fieldDescriptor, messageRules) == Ignore.Always)
             || fieldDescriptor.IsMap
-            || (fieldDescriptor.IsRepeated && !forItems))
+            || (fieldDescriptor.IsRepeated && valueEvaluatorEval.NestedRule == null))
         {
             return;
         }
 
-        var expectedWrapperDescriptor = DescriptorMappings.ExpectedWrapperConstraints(fieldDescriptor.MessageType.FullName);
+        var expectedWrapperDescriptor = DescriptorMappings.ExpectedWrapperRules(fieldDescriptor.MessageType.FullName);
         if (expectedWrapperDescriptor == null)
         {
             return;
         }
 
-        var constraintDescriptor = FieldRules.Descriptor.FindFieldByName(expectedWrapperDescriptor.Name);
-        if (constraintDescriptor == null)
+        var ruleDescriptor = FieldRules.Descriptor.FindFieldByName(expectedWrapperDescriptor.Name);
+        if (ruleDescriptor == null)
         {
             return;
         }
 
-        //should check this is a wrapped constraint.
+        //should check this is a wrapped rule.
         var valueFieldDescriptor = fieldDescriptor.MessageType.FindFieldByName("value");
         if (valueFieldDescriptor == null)
         {
             return;
         }
 
-        var unwrapped = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules));
-        BuildValue(valueFieldDescriptor, fieldRules, true, unwrapped, messageRules, nestedMessageEvaluators);
+        var fieldPathElement = valueEvaluatorEval.FieldPathElement;
+
+        var unwrapped = new ValueEvaluator(fieldRules, fieldDescriptor, fieldRules.CalculateIgnore(fieldDescriptor, messageRules), valueEvaluatorEval.NestedRule, fieldPathElement);
+        BuildValue(valueFieldDescriptor, fieldRules, unwrapped, messageRules, nestedMessageEvaluators);
         valueEvaluatorEval.AddEvaluator(unwrapped);
     }
 
-    internal void ProcessAnyRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessAnyRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
-        if ((fieldDescriptor.IsRepeated && !forItems)
+        if ((fieldDescriptor.IsRepeated && valueEvaluatorEval.NestedRule == null)
             || fieldDescriptor.FieldType != FieldType.Message
             || !fieldDescriptor.MessageType.FullName.Equals("google.protobuf.Any"))
         {
@@ -296,7 +302,7 @@ public class EvaluatorBuilder
             return;
         }
 
-        var anyEvaluatorEval = new AnyEvaluator(typeUrlDesc, fieldRules?.Any?.In, fieldRules?.Any?.NotIn);
+        var anyEvaluatorEval = new AnyEvaluator(valueEvaluatorEval, typeUrlDesc, fieldRules?.Any?.In, fieldRules?.Any?.NotIn);
         valueEvaluatorEval.AddEvaluator(anyEvaluatorEval);
     }
 
@@ -310,11 +316,11 @@ public class EvaluatorBuilder
         if (fieldRules.Enum != null && fieldRules.Enum.DefinedOnly)
         {
             var enumDescriptor = fieldDescriptor.EnumType;
-            valueEvaluatorEval.AddEvaluator(new EnumEvaluator(enumDescriptor.Values));
+            valueEvaluatorEval.AddEvaluator(new EnumEvaluator(valueEvaluatorEval, enumDescriptor.Values));
         }
     }
 
-    internal void ProcessMapRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessMapRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
         if (!fieldDescriptor.IsMap)
         {
@@ -324,36 +330,38 @@ public class EvaluatorBuilder
         var mapKeyFieldRules = fieldRules.Map?.Keys ?? new FieldRules();
         var mapValuesFieldRules = fieldRules.Map?.Values ?? new FieldRules();
 
-        var mapEval = new MapEvaluator(fieldRules, fieldDescriptor, messageRules);
-        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), mapKeyFieldRules, true, mapEval.KeyEvaluator, messageRules, nestedMessageEvaluators);
-        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), mapValuesFieldRules, true, mapEval.ValueEvaluator, messageRules, nestedMessageEvaluators);
+        var mapEval = new MapEvaluator(fieldRules, fieldDescriptor, messageRules, valueEvaluatorEval);
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(1), mapKeyFieldRules, mapEval.KeyEvaluator, messageRules, nestedMessageEvaluators);
+        BuildValue(fieldDescriptor.MessageType.FindFieldByNumber(2), mapValuesFieldRules, mapEval.ValueEvaluator, messageRules, nestedMessageEvaluators);
 
         valueEvaluatorEval.AddEvaluator(mapEval);
     }
 
-    internal void ProcessRepeatedRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, IEvaluator> nestedMessageEvaluators)
+    internal void ProcessRepeatedRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval, MessageRules messageRules, IDictionary<string, MessageEvaluator> nestedMessageEvaluators)
     {
-        if (fieldDescriptor.IsMap || !fieldDescriptor.IsRepeated || forItems)
+        if (fieldDescriptor.IsMap || !fieldDescriptor.IsRepeated || valueEvaluatorEval.NestedRule != null)
         {
             return;
         }
 
         var repeatedFieldRules = fieldRules.Repeated?.Items ?? new FieldRules();
 
-        var listEval = new ListEvaluator(fieldRules, fieldDescriptor, messageRules);
-        BuildValue(fieldDescriptor, repeatedFieldRules, true, listEval.ItemConstraints, messageRules, nestedMessageEvaluators);
+        var listEval = new ListEvaluator(valueEvaluatorEval, fieldRules, fieldDescriptor, messageRules);
+        BuildValue(fieldDescriptor, repeatedFieldRules, listEval.ItemValueEvaluator, messageRules, nestedMessageEvaluators);
         valueEvaluatorEval.AddEvaluator(listEval);
     }
 
-    internal void ProcessStandardRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, bool forItems, ValueEvaluator valueEvaluatorEval)
+    internal void ProcessStandardRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
-        var compile = Constraints.Compile(fieldDescriptor, fieldRules, forItems);
+        var fieldPathElement = valueEvaluatorEval.FieldPathElement;
+
+        var compile = Rules.Compile(fieldDescriptor, valueEvaluatorEval.NestedRule != null, fieldRules);
         if (compile.Count == 0)
         {
             return;
         }
 
-        valueEvaluatorEval.AddEvaluator(new CompiledProgramsEvaluator(compile));
+        valueEvaluatorEval.AddEvaluator(new CompiledProgramsEvaluator(valueEvaluatorEval, compile));
     }
 
     internal void ProcessMessageExpressions(MessageDescriptor messageDescriptor, MessageRules messageRules, MessageEvaluator msgEval, IMessage message)
@@ -364,23 +372,38 @@ public class EvaluatorBuilder
             return;
         }
 
-        var compiledPrograms = CompileRules(celList, CelEnvironment);
+        var compiledPrograms = CompileRules(celList, CelEnvironment, false);
         if (compiledPrograms.Count == 0)
         {
             throw new CompilationException("Compile returned null");
         }
 
-        msgEval.AddEvaluator(new CompiledProgramsEvaluator(compiledPrograms));
+        msgEval.AddEvaluator(new CompiledProgramsEvaluator(null, compiledPrograms));
     }
 
-    internal static List<CompiledProgram> CompileRules(IList<Rule> rules, CelEnvironment env)
+    internal static List<CompiledProgram> CompileRules(IList<Rule> rules, CelEnvironment env, bool isField)
     {
-        var expressions = Expression.FromRules(rules);
+        var expressions = Expression.FromRules(rules).ToList();
         var compiledPrograms = new List<CompiledProgram>();
-        foreach (var expression in expressions)
+
+        for (var i = 0; i < expressions.Count; i++)
         {
+            FieldPath? rulePath = null;
+
+            if (isField)
+            {
+                var fieldPathElement = FieldRules.Descriptor.FindFieldByNumber(FieldRules.CelFieldNumber).CreateFieldPathElement();
+                fieldPathElement.Index = Convert.ToUInt64(i);
+
+                rulePath = new FieldPath()
+                {
+                    Elements = { fieldPathElement }
+                };
+            }
+            
+            var expression = expressions[i];
             var expressionDelegate = env.Compile(expression.ExpressionText);
-            compiledPrograms.Add(new CompiledProgram(expressionDelegate, null, null, expression));
+            compiledPrograms.Add(new CompiledProgram(expressionDelegate, expression, rulePath, null, null));
         }
 
         return compiledPrograms;

@@ -1,4 +1,4 @@
-﻿// Copyright 2023 TELUS
+﻿// Copyright 2023-2025 TELUS
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,17 @@ using Google.Protobuf.Reflection;
 
 namespace ProtoValidate.Internal.Evaluator;
 
-public class AnyEvaluator : IEvaluator
+internal class AnyEvaluator : IEvaluator
 {
-    internal FieldDescriptor TypeUrlDescriptor { get; }
-    internal Dictionary<string, object?>? InLookup { get; }
-    internal Dictionary<string, object?>? NotInLookup { get; }
+    private RuleViolationHelper RuleViolationHelper { get; }
+    private FieldDescriptor TypeUrlDescriptor { get; }
+    private Dictionary<string, object?>? InLookup { get; }
+    private Dictionary<string, object?>? NotInLookup { get; }
 
-    public AnyEvaluator(FieldDescriptor typeUrlDescriptor, IList<string>? inList, IList<string>? notInList)
+    private List<FieldPathElement> InRulePathElements { get; }
+    private List<FieldPathElement> NotInRulePathElements { get; }
+
+    public AnyEvaluator(ValueEvaluator valueEvaluator, FieldDescriptor typeUrlDescriptor, IList<string>? inList, IList<string>? notInList)
     {
         TypeUrlDescriptor = typeUrlDescriptor ?? throw new ArgumentNullException(nameof(typeUrlDescriptor));
 
@@ -37,6 +41,20 @@ public class AnyEvaluator : IEvaluator
         {
             NotInLookup = notInList.ToDictionary(c => c, c => (object?)null);
         }
+
+        RuleViolationHelper = new RuleViolationHelper(valueEvaluator);
+
+        InRulePathElements = new List<FieldPathElement>
+        {
+            FieldRules.Descriptor.FindFieldByNumber(FieldRules.AnyFieldNumber).CreateFieldPathElement(),
+            AnyRules.Descriptor.FindFieldByNumber(AnyRules.InFieldNumber).CreateFieldPathElement()
+        };
+
+        NotInRulePathElements = new List<FieldPathElement>
+        {
+            FieldRules.Descriptor.FindFieldByNumber(FieldRules.AnyFieldNumber).CreateFieldPathElement(),
+            AnyRules.Descriptor.FindFieldByNumber(AnyRules.NotInFieldNumber).CreateFieldPathElement()
+        };
     }
 
     public override string ToString()
@@ -63,8 +81,9 @@ public class AnyEvaluator : IEvaluator
             var violation = new Violation
             {
                 RuleId = "any.in",
-                Message = "Type url must be in the allow list."
+                Message = "type URL must be in the allow list"
             };
+            violation.UpdatePaths(RuleViolationHelper.FieldPathElement, InRulePathElements.ToList());
 
             violationList.Add(violation);
             if (failFast)
@@ -78,9 +97,9 @@ public class AnyEvaluator : IEvaluator
             var violation = new Violation
             {
                 RuleId = "any.not_in",
-                Message = "Type url must not be in the block list."
+                Message = "type URL must not be in the block list"
             };
-
+            violation.UpdatePaths(RuleViolationHelper.FieldPathElement, NotInRulePathElements.ToList());
             violationList.Add(violation);
         }
 
