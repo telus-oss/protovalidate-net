@@ -83,28 +83,6 @@ public class Validator : IValidator
         var extensions = new List<FieldDescriptor>();
         extensions.AddRange(fileDescriptorList.SelectMany(c => c.Extensions.UnorderedExtensions));
 
-        // TypeRegistry typeRegistry;
-        // var extensionRegistry = new ExtensionRegistry();
-        //
-        //
-        // if (Options.Extensions != null && Options.Extensions.Count > 0)
-        // {
-        //     extensionRegistry.Add(ValidateExtensions.Message);
-        //     extensionRegistry.Add(ValidateExtensions.Oneof);
-        //     extensionRegistry.Add(ValidateExtensions.Field);
-        //     extensionRegistry.Add(ValidateExtensions.Predefined);
-        //     extensionRegistry.AddRange(Options.Extensions);
-        //
-        //     var descriptorSerializedDataList = GetRequiredFileDescriptors().Union(fileDescriptorList).Select(proto => proto.SerializedData).ToList();
-        //
-        //     var typeRegistryFileDescriptors = FileDescriptor.BuildFromByteStrings(descriptorSerializedDataList, extensionRegistry).ToList();
-        //     typeRegistry = TypeRegistry.FromFiles(typeRegistryFileDescriptors);
-        // }
-        // else
-        // {
-        //     typeRegistry = TypeRegistry.FromFiles(fileDescriptorList);
-        // }
-
         var celEnvironment = new CelEnvironment(fileDescriptorList, "");
         celEnvironment.StrictTypeComparison = true;
         celEnvironment.RegisterProtoValidateFunctions();
