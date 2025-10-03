@@ -86,30 +86,4 @@ internal static class FieldPathUtils
 
         return violation;
     }
-    // public static List<Violation> SetViolationFieldPathElement(this List<Violation> violations, FieldPathElement? fieldPathElement)
-    // {
-    //     if (fieldPathElement == null)
-    //     {
-    //         return violations;
-    //     }
-    //
-    //     foreach (var violation in violations)
-    //     {
-    //         violation.SetViolationFieldPathElement(fieldPathElement);
-    //     }
-    //
-    //     return violations;
-    // }
-    // public static Violation SetViolationFieldPathElement(this Violation violation, FieldPathElement? fieldPathElement)
-    // {
-    //     if (fieldPathElement == null)
-    //     {
-    //         return violation;
-    //     }
-    //
-    //     violation.Field ??= new FieldPath();
-    //     violation.Field.Elements.Insert(0, fieldPathElement.Clone());
-    //
-    //     return violation;
-    // }
 }

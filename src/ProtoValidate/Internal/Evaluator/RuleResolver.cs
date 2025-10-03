@@ -85,16 +85,4 @@ internal class RuleResolver
 
         return fieldRules;
     }
-
-    // public PredefinedRules ResolvePredefinedRules(FieldDescriptor descriptor)
-    // {
-    //     var options = descriptor.GetOptions();
-    //     if (options == null || !options.HasExtension(ValidateExtensions.Predefined))
-    //     {
-    //         return new PredefinedRules();
-    //     }
-    //
-    //     var predefinedRules = options.GetExtension(ValidateExtensions.Predefined);
-    //     return predefinedRules;
-    // }
 }

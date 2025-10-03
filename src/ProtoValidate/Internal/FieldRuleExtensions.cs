@@ -12,42 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Buf.Validate;
 using Google.Protobuf.Reflection;
 
-namespace ProtoValidate.Internal
+namespace ProtoValidate.Internal;
+
+internal static class FieldRuleExtensions
 {
-    internal static class FieldRuleExtensions
+    public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
     {
-        public static Ignore CalculateIgnore(this FieldRules fieldRules, FieldDescriptor fieldDescriptor, MessageRules messageRules)
+        if (fieldDescriptor == null)
         {
-            if (fieldDescriptor == null)
+            throw new ArgumentNullException(nameof(fieldDescriptor));
+        }
+
+        if (fieldRules.Ignore == Ignore.Unspecified)
+        {
+            // Note that adding a field to a `oneof` will also set the IfZeroValue on the fields. This means
+            // only the field that os set will be validated and the unset fields are not validated according to the field rules.
+            if (messageRules.Oneof.Any(messageRule => messageRule.Fields.Any(oneOfFieldName => string.Equals(fieldDescriptor.Name, oneOfFieldName, StringComparison.Ordinal))))
             {
-                throw new ArgumentNullException(nameof(fieldDescriptor));
+                return Ignore.IfZeroValue;
             }
-            if (fieldRules.Ignore == Ignore.Unspecified)
+
+            if (fieldDescriptor.HasPresence)
             {
-                // Note that adding a field to a `oneof` will also set the IfZeroValue on the fields. This means
-                // only the field that os set will be validated and the unset fields are not validated according to the field rules.
-                if (messageRules.Oneof.Any(messageRule => messageRule.Fields.Any(oneOfFieldName => string.Equals(fieldDescriptor.Name, oneOfFieldName, StringComparison.Ordinal))))
+                if (fieldDescriptor.ContainingType == null || !fieldDescriptor.ContainingType.IsMapEntry)
                 {
                     return Ignore.IfZeroValue;
                 }
-
-                if (fieldDescriptor.HasPresence)
-                {
-                    if (fieldDescriptor.ContainingType == null || !fieldDescriptor.ContainingType.IsMapEntry)
-                    {
-                        return Ignore.IfZeroValue;
-                    }
-                }
             }
-            return fieldRules.Ignore;
         }
+
+        return fieldRules.Ignore;
     }
 }
