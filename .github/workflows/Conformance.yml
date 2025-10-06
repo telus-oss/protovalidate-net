@@ -17,17 +17,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4      
-      
-      - name: Setup dotnet 6.0.x
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '6.0.x'
-          
-      - name: Setup dotnet 7.0.x
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '7.0.x'       
-                    
+           
       - name: Setup dotnet 8.0.x
         uses: actions/setup-dotnet@v3
         with:
@@ -45,27 +35,11 @@ jobs:
       - name: Run Conformance (Windows .Net 8.0)
         if: runner.os == 'windows'
         run: make conformance-mingw-net80
-
-      - name: Run Conformance (Windows .Net 7.0)
-        if: runner.os == 'windows'
-        run: make conformance-mingw-net70
-
-      - name: Run Conformance (Windows .Net 6.0)
-        if: runner.os == 'windows'
-        run: make conformance-mingw-net60
-
+   
       - name: Run Conformance (Windows .Net 4.8)
         if: runner.os == 'windows'
         run: make conformance-mingw-net48
-
-      - name: Run Conformance (Linux .Net 6.0)
-        if: runner.os == 'linux'
-        run: make conformance-linux-net60
-
-      - name: Run Conformance (Linux .Net 7.0)
-        if: runner.os == 'linux'
-        run: make conformance-linux-net70
-
+  
       - name: Run Conformance (Linux .Net 8.0)
         if: runner.os == 'linux'
         run: make conformance-linux-net80
