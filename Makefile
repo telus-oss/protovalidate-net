@@ -10,7 +10,7 @@ COPYRIGHT_YEARS := 2023-2025
 LICENSE_IGNORE :=
 BIN = tmp
 GO ?= go
-ARGS ?= --strict_message --timeout 10s
+ARGS ?= --timeout 10s
 PROTOVALIDATE_VERSION ?= v1.0.0
 
 
@@ -34,10 +34,13 @@ conformance-mingw-net80: $(BIN)/protovalidate-conformance  ## Execute conformanc
 conformance-linux-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
 	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/linux-x64/publish/ProtoValidate.Conformance
 
-
 .PHONY: conformance-test-dump
 conformance-test-dump: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) --dump --proto > ./tests/ProtoValidate.Conformance/Tests/Data/conformance.pb$(BIN)
+	-$(BIN)/protovalidate-conformance $(ARGS) --dump --proto > ./tests/ProtoValidate.Conformance/Tests/Data/conformance.pbbin
+
+.PHONY: conformance-test-dump-windows
+conformance-test-dump-windows: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
+	-$(BIN)/protovalidate-conformance.exe $(ARGS) --dump --proto > ./tests/ProtoValidate.Conformance/Tests/Data/conformance.pbbin
 
 
 .PHONY: generate-license
@@ -66,6 +69,6 @@ $(BIN)/protovalidate-conformance: $(BIN) Makefile
 	GOBIN=$(abspath $(BIN)) $(GO) install \
 		github.com/bufbuild/protovalidate/tools/protovalidate-conformance@$(PROTOVALIDATE_VERSION)
 
-$(BIN)/protovalidate-conformance-windows: Makefile
-	SET "GOBIN=$(abspath $(BIN))" && $(GO) install github.com/bufbuild/protovalidate/tools/protovalidate-conformance@$(PROTOVALIDATE_VERSION)
+$(BIN)/protovalidate-conformance-windows: $(BIN) Makefile
+	GOBIN=$(abspath $(BIN)) $(GO) install github.com/bufbuild/protovalidate/tools/protovalidate-conformance@$(PROTOVALIDATE_VERSION)
 
