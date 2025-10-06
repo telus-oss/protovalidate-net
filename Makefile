@@ -6,54 +6,29 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
-COPYRIGHT_YEARS := 2023
+COPYRIGHT_YEARS := 2023-2025
 LICENSE_IGNORE :=
 BIN = tmp
 GO ?= go
 ARGS ?= --strict_message --timeout 10s
-PROTOVALIDATE_VERSION ?= v0.5.4
+PROTOVALIDATE_VERSION ?= v1.0.0
 
 
 .PHONY: conformance-windows-net48
 conformance-windows-net48: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
 	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
 
-.PHONY: conformance-windows-net60
-conformance-windows-net60: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
-	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
-
-.PHONY: conformance-windows-net70
-conformance-windows-net70: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
-	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
-
 .PHONY: conformance-windows-net80
 conformance-windows-net80: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
 	$(BIN)\protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
-
 
 .PHONY: conformance-mingw-net48
 conformance-mingw-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
 	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net48/win-x64/publish/ProtoValidate.Conformance.exe
 
-.PHONY: conformance-mingw-net60
-conformance-mingw-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/win-x64/publish/ProtoValidate.Conformance.exe
-
-.PHONY: conformance-mingw-net70
-conformance-mingw-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/win-x64/publish/ProtoValidate.Conformance.exe
-
 .PHONY: conformance-mingw-net80
 conformance-mingw-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
 	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
-
-.PHONY: conformance-linux-net60
-conformance-linux-net60: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net6.0/linux-x64/publish/ProtoValidate.Conformance
-
-.PHONY: conformance-linux-net70
-conformance-linux-net70: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net7.0/linux-x64/publish/ProtoValidate.Conformance
 
 .PHONY: conformance-linux-net80
 conformance-linux-net80: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	
