@@ -13,10 +13,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="Tests\Data\conformance.pbbin" />
-    </ItemGroup>
-
-    <ItemGroup>
         <EmbeddedResource Include="Tests\Data\conformance.pbbin" />
     </ItemGroup>
     <ItemGroup>
