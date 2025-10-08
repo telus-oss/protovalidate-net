@@ -97,20 +97,11 @@ public class ConformanceUnitTests
         //test for unexpected errors
         Assert.That(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError), Is.EqualTo(string.IsNullOrWhiteSpace(testResults.UnexpectedError)), testResults.UnexpectedError);
 
-        //test for compilation errors
-        if (ShouldTreatExpectedRuntimeExceptionAsCompilationException(testCase))
-        {
-            //test for compilation errors
-            Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
-        }
-        else
-        {
-            //test for compilation errors
-            Assert.That(string.IsNullOrWhiteSpace(testResults.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
+        //test for Runtime.
+        Assert.That(string.IsNullOrWhiteSpace(testResults.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
 
-            //test for Runtime.
-            Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError)));
-        }
+        //test for compilation errors
+        Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError)));
 
         if (testCase.ExpectedResult == null)
         {
@@ -249,21 +240,6 @@ public class ConformanceUnitTests
         });
     }
 
-    private bool ShouldTreatExpectedRuntimeExceptionAsCompilationException(ConformanceUnitTestCase testCase)
-    {
-        if (string.Equals("custom_rules", testCase.SuiteName, StringComparison.Ordinal))
-        {
-            //required because of dyn type restrictions in CEL.
-            if (string.Equals("runtime/dyn_incorrect_type", testCase.CaseName, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
-
-    }
-
     [Test]
     [TestCaseSource(typeof(ConformanceUnitTestParser), nameof(ConformanceUnitTestParser.GetTestCases), Category = "Conformance Unit Tests")]
     public void SimpleTestFailFast(ConformanceUnitTestCase testCase)
@@ -272,19 +248,11 @@ public class ConformanceUnitTests
 
         var testResults = Validate(testData!, true);
 
-        if (ShouldTreatExpectedRuntimeExceptionAsCompilationException(testCase))
-        {
-            //test for compilation errors
-            Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
-        }
-        else
-        {
-            //test for compilation errors
-            Assert.That(string.IsNullOrWhiteSpace(testResults.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
+        //test for compilation errors
+        Assert.That(string.IsNullOrWhiteSpace(testResults.RuntimeError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.RuntimeError)));
 
-            //test for Runtime.
-            Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError)));
-        }
+        //test for Runtime.
+        Assert.That(string.IsNullOrWhiteSpace(testResults.CompilationError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.CompilationError)));
 
         //test for unexpected errors
         Assert.That(string.IsNullOrWhiteSpace(testResults.UnexpectedError), Is.EqualTo(string.IsNullOrWhiteSpace(testCase.ExpectedResult?.UnexpectedError)));
@@ -310,16 +278,8 @@ public class ConformanceUnitTests
         {
             Assert.That(testResults.Success, Is.False);
             Assert.That(testResults.ValidationError?.Violations_, Is.Null);
-            if (!ShouldTreatExpectedRuntimeExceptionAsCompilationException(testCase))
-            {
-                Assert.That(testResults.HasRuntimeError, Is.True);
-                Assert.That(testResults.HasCompilationError, Is.False);
-            }
-            else
-            {
-                Assert.That(testResults.HasRuntimeError, Is.False);
-                Assert.That(testResults.HasCompilationError, Is.True);
-            }
+            Assert.That(testResults.HasRuntimeError, Is.True);
+            Assert.That(testResults.HasCompilationError, Is.False);
         }
         else if (testCase.ExpectedResult.HasCompilationError)
         {
