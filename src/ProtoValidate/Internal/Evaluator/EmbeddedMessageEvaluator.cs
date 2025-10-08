@@ -31,7 +31,7 @@ internal class EmbeddedMessageEvaluator : IEvaluator
     {
         var validationResult = MessageEvaluator.Evaluate(value, failFast);
 
-        validationResult.Violations.UpdatePaths(RuleViolationHelper.FieldPathElement, RuleViolationHelper.RulePrefixElements);
+        validationResult.Violations.UpdatePaths(RuleViolationHelper.FieldPathElement, []);
 
         return validationResult;
     }

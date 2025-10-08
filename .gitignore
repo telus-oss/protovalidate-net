@@ -11,3 +11,4 @@ syntax: glob
 build/
 tmp/
 *.orig
+*.local.json

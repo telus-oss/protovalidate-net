@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Collections.Concurrent;
 using Buf.Validate;
 using Cel;
 using Google.Protobuf;
@@ -20,6 +19,9 @@ using Google.Protobuf.Reflection;
 using ProtoValidate.Exceptions;
 using ProtoValidate.Internal.Cel;
 using ProtoValidate.Internal.Rules;
+using System.Collections.Concurrent;
+using System.Data;
+using System.Xml.Linq;
 
 namespace ProtoValidate.Internal.Evaluator;
 
@@ -149,6 +151,30 @@ internal class EvaluatorBuilder
     {
         foreach (var messageOneofRule in messageRules.Oneof)
         {
+            if (messageOneofRule.Fields.Count == 0)
+            {
+                throw new CompilationException($"at least one field must be specified in oneof rule for the message {messageDescriptor.FullName}");
+            }
+
+            var fields = new List<string>();
+
+            foreach (var ruleFieldName in messageOneofRule.Fields)
+            {
+                var fieldDescriptor = messageDescriptor.FindFieldByName(ruleFieldName);
+                if (fieldDescriptor == null)
+                {
+                    throw new CompilationException($"field {ruleFieldName} not found in {messageDescriptor.FullName}");
+                }
+
+                if (fields.Contains(ruleFieldName))
+                {
+                    throw new CompilationException($"duplicate {ruleFieldName} in oneof rule for the message {messageDescriptor.FullName}");
+                }
+
+                fields.Add(ruleFieldName);
+            }
+
+
             var oneofEvaluatorEval = new MessageOneofEvaluator(messageDescriptor, messageOneofRule);
             messageEvaluator.AddEvaluator(oneofEvaluatorEval);
         }
@@ -209,8 +235,8 @@ internal class EvaluatorBuilder
 
     internal void ProcessFieldExpressions(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
-        IList<Rule> rulesCelList = fieldRules.Cel;
-        if (rulesCelList.Count == 0)
+        IList<Buf.Validate.Rule> rulesCelList = fieldRules.Cel;
+        if (rulesCelList.Count == 0)    
         {
             return;
         }
@@ -235,7 +261,7 @@ internal class EvaluatorBuilder
         {
             return;
         }
-
+        
         if (!nestedMessageEvaluators.TryGetValue(fieldDescriptor.MessageType.FullName, out var embedEval))
         {
             embedEval = Build(fieldDescriptor.MessageType, nestedMessageEvaluators);
@@ -353,8 +379,17 @@ internal class EvaluatorBuilder
 
     internal void ProcessStandardRules(FieldDescriptor fieldDescriptor, FieldRules fieldRules, ValueEvaluator valueEvaluatorEval)
     {
-        var fieldPathElement = valueEvaluatorEval.FieldPathElement;
-
+        // If this is a wrapper field, just return. Wrapper fields are handled by
+        // processWrapperRules and their unwrapped values are passed through the process gauntlet.
+        if (fieldDescriptor.FieldType == FieldType.Message)
+        {
+            FieldDescriptor? expectedWrapperDescriptor = DescriptorMappings.ExpectedWrapperRules(fieldDescriptor.MessageType.FullName);
+            if (expectedWrapperDescriptor != null)
+            {
+                return;
+            }
+        }
+        
         var compile = Rules.Compile(fieldDescriptor, valueEvaluatorEval.NestedRule != null, fieldRules);
         if (compile.Count == 0)
         {
@@ -381,7 +416,7 @@ internal class EvaluatorBuilder
         msgEval.AddEvaluator(new CompiledProgramsEvaluator(null, compiledPrograms));
     }
 
-    internal static List<CompiledProgram> CompileRules(IList<Rule> rules, CelEnvironment env, bool isField)
+    internal static List<CompiledProgram> CompileRules(IList<Buf.Validate.Rule> rules, CelEnvironment env, bool isField)
     {
         var expressions = Expression.FromRules(rules).ToList();
         var compiledPrograms = new List<CompiledProgram>();
@@ -400,7 +435,7 @@ internal class EvaluatorBuilder
                     Elements = { fieldPathElement }
                 };
             }
-            
+
             var expression = expressions[i];
             var expressionDelegate = env.Compile(expression.ExpressionText);
             compiledPrograms.Add(new CompiledProgram(expressionDelegate, expression, rulePath, null, null));

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Dynamic;
 using Buf.Validate;
 using Cel;
 using Google.Protobuf;
@@ -61,7 +62,16 @@ internal class CompiledProgram
             {
                 variables.Remove("rule");
             }
+
             evalResult = CelProgramDelegate?.Invoke(variables);
+        }
+        catch (CelNoSuchOverloadException x)
+        {
+            throw new CompilationException(x.Message);
+        }
+        catch (CelNoSuchFieldException x)
+        {
+            throw new CompilationException(x.Message);
         }
         catch (Exception x)
         {
