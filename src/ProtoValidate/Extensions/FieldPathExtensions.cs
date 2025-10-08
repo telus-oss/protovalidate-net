@@ -23,7 +23,7 @@ public static class FieldPathExtensions
             builder.Append(element.FieldName);
 
             // Handle subscript cases
-            if (element.Index != 0)
+            if (element.HasIndex)
             {
                 builder.Append("[");
                 builder.Append(element.Index);

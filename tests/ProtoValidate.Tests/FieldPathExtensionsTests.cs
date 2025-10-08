@@ -92,7 +92,7 @@ public class FieldPathExtensionsTests
     }
 
     [Test]
-    public void GetPath_WithFieldNameAndZeroIndex_ReturnsFieldNameOnly()
+    public void GetPath_WithFieldNameAndZeroIndex_ReturnsFieldWithIndex()
     {
         // Arrange
         var fieldPath = new FieldPath();
@@ -104,7 +104,7 @@ public class FieldPathExtensionsTests
         var result = fieldPath.GetPath();
 
         // Assert
-        Assert.That(result, Is.EqualTo("items"));
+        Assert.That(result, Is.EqualTo("items[0]"));
     }
 
     [Test]
@@ -424,7 +424,7 @@ public class FieldPathExtensionsTests
     }
 
     [Test]
-    public void GetPath_WithZeroIndex_DoesNotIncludeIndex()
+    public void GetPath_WithZeroIndex_IncludesIndex()
     {
         // Arrange
         var fieldPath = new FieldPath();
@@ -436,7 +436,7 @@ public class FieldPathExtensionsTests
         var result = fieldPath.GetPath();
 
         // Assert
-        Assert.That(result, Is.EqualTo("array"));
+        Assert.That(result, Is.EqualTo("array[0]"));
     }
 
     [Test]
