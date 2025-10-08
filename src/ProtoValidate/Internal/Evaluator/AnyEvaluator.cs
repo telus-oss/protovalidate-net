@@ -84,6 +84,7 @@ internal class AnyEvaluator : IEvaluator
                 Message = "type URL must be in the allow list"
             };
             violation.UpdatePaths(RuleViolationHelper.FieldPathElement, InRulePathElements.ToList());
+            violation.UpdatePaths(null, RuleViolationHelper.RulePrefixElements);
 
             violationList.Add(violation);
             if (failFast)
@@ -100,6 +101,7 @@ internal class AnyEvaluator : IEvaluator
                 Message = "type URL must not be in the block list"
             };
             violation.UpdatePaths(RuleViolationHelper.FieldPathElement, NotInRulePathElements.ToList());
+            violation.UpdatePaths(null, RuleViolationHelper.RulePrefixElements);
             violationList.Add(violation);
         }
 

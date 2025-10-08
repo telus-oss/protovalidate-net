@@ -257,19 +257,33 @@ internal class RuleCache
         // Get the expected rule descriptor based on the provided field descriptor and the flag
         // indicating whether it is for items.
         var expectedRuleDescriptor = DescriptorMappings.GetExpectedRuleDescriptor(fieldDescriptor, forItems);
-        if (expectedRuleDescriptor == null)
-        {
-            return null;
-        }
-
-        if (oneofFieldDescriptor.FullName != expectedRuleDescriptor.FullName)
+       
+        if (expectedRuleDescriptor != null && oneofFieldDescriptor.FullName != expectedRuleDescriptor.FullName)
         {
             // If the expected rule does not match the actual oneof rule, throw a
             // CompilationError.
-            throw new CompilationException($"Expected rule '{expectedRuleDescriptor.FullName}', got '{oneofFieldDescriptor.FullName}' on field '{fieldDescriptor.FullName}'.");
+            throw new CompilationException("mismatched rule type and field type");
         }
 
         var typedFieldRules = (IMessage)oneofFieldDescriptor.Accessor.GetValue(fieldRules);
+
+        // If the expected rule descriptor is null or if the field rules do not have the
+        // oneof field descriptor there are no rules to resolve, so return null.
+        if (expectedRuleDescriptor == null || typedFieldRules == null)
+        {
+            if (expectedRuleDescriptor == null)
+            {
+                // The only expected rule descriptor for message fields is for well known types.
+                // If we didn't find a descriptor and this is a message, there must be a mismatch.
+                if (fieldDescriptor.FieldType == FieldType.Message)
+                {
+                    throw new CompilationException($"mismatched message rules, {oneofFieldDescriptor.Name} is not a valid rule for field {fieldDescriptor.Name}");
+                }
+            }
+            // If both expected rule descriptor and typed field rules are null, return null.
+            return null;
+        }
+
 
         var resolvedRule = new ResolvedRule(typedFieldRules, oneofFieldDescriptor);
         
