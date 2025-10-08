@@ -11,7 +11,7 @@ LICENSE_IGNORE :=
 BIN = tmp
 GO ?= go
 
-ARGS ?= --timeout 60s --strict_message
+ARGS ?= --timeout 60s --strict_message --strict_error
 PROTOVALIDATE_VERSION ?= v1.0.0
 
 
@@ -21,7 +21,7 @@ conformance-windows-net48: $(BIN)/protovalidate-conformance-windows  ## Execute 
 
 .PHONY: conformance-windows-net80
 conformance-windows-net80: $(BIN)/protovalidate-conformance-windows  ## Execute conformance tests.	
-	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Debug/net8.0/ProtoValidate.Conformance.exe
+	$(BIN)/protovalidate-conformance.exe $(ARGS) ./tests/ProtoValidate.Conformance/bin/Release/net8.0/win-x64/publish/ProtoValidate.Conformance.exe
 
 .PHONY: conformance-mingw-net48
 conformance-mingw-net48: $(BIN)/protovalidate-conformance  ## Execute conformance tests.	

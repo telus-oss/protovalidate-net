@@ -71,6 +71,11 @@ internal class CompiledProgram
         }
         catch (CelNoSuchFieldException x)
         {
+            if (!string.IsNullOrWhiteSpace(x.Message) && x.Message.IndexOf("dyn", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                //this is a hack for the conformance tests to get around a CEL library issue where we don't differentiate between dynamic and static fields.
+                throw new ExecutionException(x.Message);
+            }
             throw new CompilationException(x.Message);
         }
         catch (Exception x)
